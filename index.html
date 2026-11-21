@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edge of Sync</title>
+<meta name="description" content="A computational model of how a dancing group moves into and out of synchrony when its own movement makes the music it hears.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;600&display=swap">
+<style>
+/* VOICE calm research instrument, curious, precise
+   IDEA a dance floor at night: bodies as glowing oscillators, their color their place in the beat
+   PICTURE live 3D floor with dancers, mean-phase ring and learned coupling threads
+   COLOR deep blue-black floor, phase colors around the hue wheel, teal for coupling, gold for "together", rose for "apart"
+   TYPE Fraunces for titles, Inter for text
+   LAYOUT laptop: floor left, panel right; phone: floor on top, panel below */
+:root{color-scheme:dark;--bg:#0c0f1a;--panel:#121625;--ink:#e9ecf5;--mute:#a2a9bd;--line:#262c40;--btn:#1a1f31;--accent:#4fd1c5;--gold:#f2c862;--rose:#f08aa5}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
+.intro{background:#fbfaf7;color:#2b2a2f;color-scheme:light;padding:clamp(56px,10vh,120px) clamp(20px,6vw,72px) 24px}
+.intro .in{max-width:760px;margin:0 auto}
+.intro h1{font:600 clamp(44px,7vw,76px)/1 Fraunces,Georgia,serif;letter-spacing:-.02em;color:#1d1f27;margin:0 0 14px}
+.intro .sub{font:500 clamp(20px,2.4vw,26px)/1.3 Fraunces,Georgia,serif;color:#5a5866;margin:0 0 30px;text-wrap:balance}
+.intro .body{font-size:clamp(17px,1.5vw,19px);line-height:1.65;margin:0;max-width:68ch;text-wrap:pretty}
+.intro-acts{display:flex;flex-wrap:wrap;align-items:center;gap:14px 28px;margin-top:36px}
+.intro .go{color:#5a5866;text-decoration:none;border-bottom:1px solid #c9c4cf;padding-bottom:2px;font-size:15px}
+.intro .go:hover{color:#1d1f27;border-color:#1d1f27}
+.intro .go:focus-visible{outline:2px solid #3a7f79;outline-offset:3px}
+.fade-down{height:clamp(120px,22vh,220px);background:linear-gradient(#fbfaf7,var(--bg))}
+.fade-up{height:clamp(120px,22vh,220px);background:linear-gradient(var(--bg),#fbfaf7)}
+.site-foot{background:#fbfaf7;color:#6b6670;color-scheme:light;padding:8px 20px 40px;text-align:center;font-size:13px}
+.site-foot .repo{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:10px 20px;border:1px solid #2b2a2f;border-radius:999px;color:#1d1f27;text-decoration:none;font-size:15px;font-weight:600;background:#fff}
+.site-foot .repo:hover{background:#1d1f27;color:#fbfaf7}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 400px;height:100vh;height:100svh}
+.stage{position:relative;overflow:hidden;background:radial-gradient(circle at 50% 55%,#182038 0,var(--bg) 70%)}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
+.hint{position:absolute;left:16px;right:16px;bottom:12px;font-size:13px;color:var(--mute);margin:0;pointer-events:none}
+.zoomhint{position:absolute;left:50%;top:16px;transform:translateX(-50%);background:rgba(12,15,26,.88);border:1px solid var(--line);border-radius:8px;padding:6px 12px;font-size:14px;opacity:0;transition:opacity .3s;pointer-events:none}
+.badge{position:absolute;left:16px;top:16px;background:rgba(12,15,26,.72);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;pointer-events:none}
+.badge b{font:600 22px/1.1 Fraunces,Georgia,serif;display:block}
+.tip{position:absolute;max-width:260px;font-size:14px;line-height:1.35;background:#1a1f31;border:1px solid #39405a;padding:8px 10px;border-radius:7px;pointer-events:none;display:none}
+.panel{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;padding:22px 20px 28px}
+.panel h1{font:600 32px/1.05 Fraunces,Georgia,serif;margin:0 0 4px}
+h2{font-size:15px;font-weight:600;margin:24px 0 8px}
+.ver{font-size:13px;color:var(--mute);margin:0 0 6px}
+.lede{color:var(--mute);margin:0 0 14px;font-size:15px}
+button{font:inherit;font-size:15px;color:var(--ink);background:var(--btn);border:1px solid var(--line);border-radius:8px;min-height:44px;padding:8px 12px;cursor:pointer;text-align:left}
+button:hover{border-color:#4a5372}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[aria-pressed=true]{background:#17363a;border-color:var(--accent)}
+button small{display:block;font-size:13px;color:var(--mute)}
+button:disabled{opacity:.5;cursor:default}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:4px}
+.seg button{border-color:transparent;background:transparent;text-align:center;font-size:14px;padding:8px 6px}
+.seg button[aria-pressed=true]{background:#20283f;border-color:#3d4766}
+.acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.acts button{font-size:14px;line-height:1.25}
+.run{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;margin-top:10px}
+.ctl{display:grid;gap:10px}
+.ctl label,.run label{font-size:14px;color:var(--mute);display:grid;gap:2px}
+.ctl label span b{color:var(--ink);font-weight:600}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+.check{display:flex;gap:10px;align-items:center;font-size:14px;color:var(--ink)}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+.row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+.row b{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.row em{grid-column:1/-1;font-style:normal;font-size:13px;color:var(--mute);margin-top:-2px}
+.chart{width:100%;height:130px;display:block;background:#0f1320;border:1px solid var(--line);border-radius:8px;margin-top:6px}
+.cap{font-size:13px;color:var(--mute);margin:4px 0 0}
+.keys{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px;color:var(--mute);margin-top:4px}
+.keys i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.note{font-size:14px;color:var(--mute);margin:8px 0 0}
+.log{list-style:none;padding:0;margin:0;font-size:14px;display:grid;gap:6px}
+.log li{border-left:2px solid var(--line);padding-left:8px}
+.log small{display:block;color:var(--mute);font-size:13px}
+details{margin-top:20px;border-top:1px solid var(--line);padding-top:12px}
+summary{cursor:pointer;font-weight:600;min-height:32px}
+details p,details li{font-size:15px}
+details ul{padding-left:18px}
+.tag{display:inline-block;font-size:12px;padding:0 6px;border-radius:4px;margin-left:4px;vertical-align:1px}
+.t-pub{background:#1d3550;color:#9cc8f2}.t-new{background:#3a2233;color:#f0a8cf}.t-ill{background:#3a321b;color:#f0d38a}
+.refs{list-style:none;padding:0}.refs li{padding-left:1.4em;text-indent:-1.4em;margin-bottom:6px;font-size:14px}
+a{color:#8fd9d2}
+.snd{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;margin-top:10px}
+.snd label{font-size:14px;color:var(--mute);display:grid;gap:2px}
+@media(max-width:760px){.app{grid-template-columns:minmax(0,1fr);height:auto}.stage{height:60svh;min-height:340px}.panel{border-left:0;border-top:1px solid var(--line);padding:18px 16px 28px}}
+</style>
+</head>
+<body>
+<header class="intro">
+  <div class="in">
+    <h1>Edge of Sync</h1>
+    <p class="sub">A computational model of collective transitions in a dancing group</p>
+    <p class="body">This project models how a dancing group moves into and out of synchrony in a closed loop, where the dancers’ own movement generates the music they hear. Each dancer is an oscillator with a tempo of their own, moving across a shared floor, and the strength of their coupling learns from their shared history. The model asks when and how the collective shifts between states of synchrony, from either direction, how near to a transition the group is at any moment, and whether groups hold themselves at that edge. It is the generative counterpart to an experimental study that will track movement, sound and heart rate, and ask whether these transitions carry consequences for altered states of consciousness and wellbeing.</p>
+    <div class="intro-acts"><a class="go" href="#model">Explore the model ↓</a></div>
+  </div>
+</header>
+<div class="fade-down" aria-hidden="true"></div>
+<main class="app" id="model">
+  <div class="stage" id="stage">
+    <div class="badge" id="badge"><b id="stateName">Apart</b><span id="stateSub">phase synchrony 0.00</span></div>
+    <div class="tip" id="tip"></div>
+    <div class="zoomhint" id="zoomhint">Hold Ctrl (⌘ on a Mac) and scroll to zoom</div>
+    <p class="hint" id="hint">Drag to turn; pinch, or hold Ctrl (⌘) and scroll, to zoom. Click the floor to scramble the rhythm of the dancers nearby and watch whether the group recovers. Each dancer’s color is their place in their own beat.</p>
+  </div>
+  <aside class="panel">
+    <h1>The model</h1>
+    <p class="ver">Each figure is one dancer</p>
+    <p class="lede">Dancers move, keep their own tempo, listen to the music their group makes, and learn whom to move with.</p>
+
+    <div class="run">
+      <button id="play" aria-pressed="false">Pause</button>
+      <label for="speed"><span id="speedl">Real time</span><input id="speed" type="range" min="0" max="3" step="1" value="1"></label>
+    </div>
+    <div class="snd">
+      <button id="sound" aria-pressed="false">Sound off</button>
+      <label for="vol"><span>Volume</span><input id="vol" type="range" min="0" max="1" step=".05" value=".6"></label>
+    </div>
+    <p class="note">Each dancer sounds a soft note on their own beat. The group’s pulse and a sustained chord grow clearer as the group synchronizes; with the loop closed, the dancers hear that pulse and lean toward it.</p>
+
+    <h2>Start from a scenario</h2>
+    <div class="acts" id="presets"></div>
+
+    <div id="stats"></div>
+
+    <h2>Phase synchrony over time</h2>
+    <canvas class="chart" id="cTime"></canvas>
+    <div class="keys"><span><i style="background:#f2c862"></i>Phase synchrony R</span><span><i style="background:#4fd1c5"></i>Mean learned coupling</span><span><i style="background:#b69cf2"></i>Space–phase order S</span></div>
+
+    <h2>Landscape</h2>
+    <canvas class="chart" id="cLand"></canvas>
+    <p class="cap">A quasi-potential from the last minute: wells are states the group keeps returning to, the ball is where it is now. Two wells mean the group is bistable.</p>
+
+    <h2>Early warning</h2>
+    <canvas class="chart" id="cEWS"></canvas>
+    <div class="keys"><span><i style="background:#f08aa5"></i>Variance of R</span><span><i style="background:#9cc8f2"></i>Autocorrelation at 1 s</span></div>
+    <p class="cap">Both tend to rise as a transition approaches, because the group recovers more slowly from small disturbances (critical slowing down).</p>
+
+    <h2>Sweep: approach from both directions</h2>
+    <button id="sweep">Sweep coupling up, then down<small>About two minutes of model time</small></button>
+    <canvas class="chart" id="cSweep"></canvas>
+    <div class="keys"><span><i style="background:#f2c862"></i>Coupling rising</span><span><i style="background:#4fd1c5"></i>Coupling falling</span></div>
+    <p class="cap">If the group tips into synchrony at a higher coupling than it falls out of it, the two branches separate: hysteresis, a sign of two coexisting states.</p>
+
+    <h2>Controls</h2>
+    <div class="ctl">
+      <div><div class="cap" style="margin:0 0 4px">How dancers move</div>
+        <div class="seg" role="group" aria-label="Movement rule" id="mode"><button data-v="swarm" aria-pressed="true">Swarmalator</button><button data-v="couzin" aria-pressed="false">Couzin zones</button></div></div>
+      <label for="kN"><span>Dancers: <b id="vN"></b></span><input id="kN" type="range" min="4" max="30" step="1"></label>
+      <label for="kK"><span>Coupling strength: <b id="vK"></b></span><input id="kK" type="range" min="0" max="3" step=".05"></label>
+      <label for="kS"><span>Spread of natural tempos: <b id="vS"></b></span><input id="kS" type="range" min="0" max=".4" step=".01"></label>
+      <label for="kJ"><span>Drawn toward those in phase: <b id="vJ"></b></span><input id="kJ" type="range" min="-1" max="1" step=".05"></label>
+      <label for="kV"><span>Self-propulsion (direction of travel): <b id="vV"></b></span><input id="kV" type="range" min="0" max=".6" step=".02"></label>
+      <label for="kD"><span>Noise: <b id="vD"></b></span><input id="kD" type="range" min="0" max=".5" step=".01"></label>
+      <label class="check"><input type="checkbox" id="kA"> Adaptive coupling (Hebbian learning)</label>
+      <label for="kE"><span>Learning rate: <b id="vE"></b></span><input id="kE" type="range" min="0" max=".5" step=".01"></label>
+      <label for="kB"><span>Plasticity lag β (non-reciprocal learning): <b id="vB"></b></span><input id="kB" type="range" min="0" max="1.6" step=".05"></label>
+      <label class="check"><input type="checkbox" id="kL"> Closed loop: dancers hear the group’s music</label>
+      <label for="kF"><span>Strength of the music’s pull: <b id="vF"></b></span><input id="kF" type="range" min="0" max="3" step=".05"></label>
+      <button id="restart">Restart with new dancers</button>
+    </div>
+
+    <h2>What happened</h2>
+    <ul class="log" id="log"></ul>
+
+    <details>
+      <summary>Description</summary>
+      <p><b>What you see.</b> Each figure is a dancer on a shared floor. Its color is its phase, its place in its own movement cycle, and it bobs on its beat. When colors match, dancers are in step. Teal threads join pairs whose learned coupling is strong. The ring around the floor carries a light at the group’s mean phase, bright when the group is synchronized and dim when it is not.</p>
+      <p><b>The engine.</b> Movement follows the swarmalator model: dancers are drawn toward one another, more so toward those in phase, while keeping personal space; with self-propulsion they also travel in a direction, as directional swarmalators do. Couzin’s zones of repulsion, alignment and attraction are an alternative movement rule. Phases couple as in the Kuramoto model, weighted by proximity, around each dancer’s own natural tempo. With adaptive coupling on, each pair’s coupling strengthens when they move in phase and weakens when they do not, so the group learns its own coordination; a plasticity lag makes that learning non-reciprocal, which can leave the group restlessly switching between states (metastability).</p>
+      <p><b>The closed loop.</b> The group’s movement makes the music: each beat sounds, and the group’s pulse grows clearer as it synchronizes. With the loop closed, dancers hear that pulse a moment late and lean toward it. Because the pull of the music grows with the group’s own synchrony, the loop can make two states stable at once, together and apart, which the landscape shows as two wells and the sweep shows as hysteresis.</p>
+      <p><b>Reading transitions.</b> A transition is the group crossing from one well to the other. Watch the early-warning panel as the group nears the edge, click the floor to nudge it and see how long it takes to recover, and run the sweep to see whether it tips at different points coming from each direction.</p>
+    </details>
+
+    <details>
+      <summary>Data and sources</summary>
+      <p>Each part is tagged as a <span class="tag t-pub">published model</span>, a <span class="tag t-new">novel combination</span> built here, or an <span class="tag t-ill">illustrative</span> parameter not yet calibrated to dance data.</p>
+      <ul>
+        <li>Swarmalator movement and phase coupling (O’Keeffe, Hong &amp; Strogatz, 2017); heterogeneous natural tempos (Yoon et al., 2022); self-propulsion and direction (directional swarmalators) <span class="tag t-pub">published model</span></li>
+        <li>Zones of repulsion, alignment and attraction (Couzin et al., 2002) <span class="tag t-pub">published model</span></li>
+        <li>Kuramoto phase synchrony and its order parameter (Kuramoto, 1984; Strogatz, 2000) <span class="tag t-pub">published model</span></li>
+        <li>Adaptive coupling with a plasticity phase lag (Aoki &amp; Aoyagi, 2009; metastability from non-reciprocal adaptive couplings, 2025) <span class="tag t-pub">published model</span></li>
+        <li>Adaptive coupling inside a swarmalator, with a closed loop through generated music whose pull grows with synchrony <span class="tag t-new">novel combination</span></li>
+        <li>Early-warning signals of critical transitions (Scheffer et al., 2009); quasi-potential from the distribution of the order parameter <span class="tag t-pub">published method</span></li>
+        <li>All parameter values: tempos around one cycle per second, distances, learning rates, music latency (0.15 s) <span class="tag t-ill">illustrative</span></li>
+      </ul>
+      <h2 style="margin-top:16px">References</h2>
+      <ul class="refs">
+        <li>Aoki, T., &amp; Aoyagi, T. (2009). Co-evolution of phases and connection strengths in a network of phase oscillators. <i>Physical Review Letters, 102</i>, 034101.</li>
+        <li>Couzin, I. D., Krause, J., James, R., Ruxton, G. D., &amp; Franks, N. R. (2002). Collective memory and spatial sorting in animal groups. <i>Journal of Theoretical Biology, 218</i>(1), 1–11.</li>
+        <li>Directional synchrony among self-propelled particles under spatial influence. (2023). arXiv preprint.</li>
+        <li>Kuramoto, Y. (1984). <i>Chemical oscillations, waves, and turbulence</i>. Springer.</li>
+        <li>Metastability induced by non-reciprocal adaptive couplings in Kuramoto models. (2025). <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC13061673/">PubMed Central</a>.</li>
+        <li>O’Keeffe, K. P., Hong, H., &amp; Strogatz, S. H. (2017). Oscillators that sync and swarm. <i>Nature Communications, 8</i>, 1504.</li>
+        <li>Ott, E., &amp; Antonsen, T. M. (2008). Low dimensional behavior of large systems of globally coupled oscillators. <i>Chaos, 18</i>, 037113.</li>
+        <li>Rodrigues, F. A., Peron, T. K. D., Ji, P., &amp; Kurths, J. (2016). The Kuramoto model in complex networks. <i>Physics Reports, 610</i>, 1–98.</li>
+        <li>Scheffer, M., Bascompte, J., Brock, W. A., Brovkin, V., Carpenter, S. R., Dakos, V., Held, H., van Nes, E. H., Rietkerk, M., &amp; Sugihara, G. (2009). Early-warning signals for critical transitions. <i>Nature, 461</i>, 53–59.</li>
+        <li>Strogatz, S. H. (2000). From Kuramoto to Crawford: Exploring the onset of synchronization in populations of coupled oscillators. <i>Physica D, 143</i>, 1–20.</li>
+        <li>Swarmalators under competitive time-varying phase interactions. (2022). <i>New Journal of Physics, 24</i>, 043004. <a href="https://iopscience.iop.org/article/10.1088/1367-2630/ac5da2">IOP</a></li>
+        <li>Yoon, S., O’Keeffe, K. P., Mendes, J. F. F., &amp; Goltsev, A. V. (2022). Sync and swarm: Solvable model of nonidentical swarmalators. <i>Physical Review Letters, 129</i>, 208002.</li>
+      </ul>
+    </details>
+  </aside>
+</main>
+<div class="fade-up" aria-hidden="true"></div>
+<footer class="site-foot">
+  <a class="repo" href="https://github.com/etswan/edgeofsync"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38v-1.34c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.06-.49.06-.49.8.06 1.23.83 1.23.83.72 1.22 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>View the source code on GitHub</a>
+  <p style="margin:18px 0 0;font-size:12px;color:#8a8590">Model developed by Emma T. Swan</p>
+</footer>
+
+<script src="js/three.min.js"></script>
+<script src="js/OrbitControls.js"></script>
+<script>
+{
+const $ = s => document.querySelector(s);
+function main(){
+  const stage = $('#stage'), tip = $('#tip');
+  if (!window.THREE || !THREE.OrbitControls) { $('#hint').textContent = 'The 3D library did not load. Check your connection and reload the page.'; return; }
+  const V = THREE.Vector3, TAU = Math.PI * 2;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let seed = 7; const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
+  const gauss = () => { let u = 0, v = 0; while (u === 0) u = rnd(); v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v); };
+  const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+
+  /* ---------- parameters ---------- */
+  const P = { k0:.3, N:16, K:.9, sigma:.25, J:.5, v0:0, noise:.08, mode:'swarm', adaptive:false, eps:.15, beta:0, loop:true, F:1.0, tau:.15, f0:1.0, speed:1 };
+  const RF = 2.2, SC = 5.2;            // floor radius (model units) and world scale
+  const DT = .02;
+
+  /* ---------- agents ---------- */
+  let A = [], Kij = new Float32Array(0), t = 0;
+  const PENTA = [146.83, 174.61, 196, 220, 261.63, 293.66, 349.23, 392, 440, 523.25];
+  function makeAgent(i){
+    const r = Math.sqrt(rnd()) * 1.6, a = rnd() * TAU;
+    return { x:r * Math.cos(a), z:r * Math.sin(a), ph:rnd() * TAU, th:rnd() * TAU, z0:gauss(), vx:0, vz:0, pitch:PENTA[i % PENTA.length] * (i >= PENTA.length ? .5 : 1), beat:0, glow:0 };
+  }
+  function resetCoupling(){ const n = A.length; Kij = new Float32Array(n * n).fill(P.adaptive ? P.k0 : 1); for (let i = 0; i < n; i++) Kij[i * n + i] = 0; }
+  function spawn(n){ A = []; for (let i = 0; i < n; i++) A.push(makeAgent(i)); resetCoupling(); }
+  function resize(n){
+    const old = A.length, oldK = Kij;
+    if (n > old) for (let i = old; i < n; i++) A.push(makeAgent(i)); else A.length = n;
+    Kij = new Float32Array(n * n).fill(P.adaptive ? P.k0 : 1);
+    for (let i = 0; i < Math.min(n, old); i++) for (let j = 0; j < Math.min(n, old); j++) Kij[i * n + j] = oldK[i * old + j];
+    for (let i = 0; i < n; i++) Kij[i * n + i] = 0;
+    buildFigures();
+  }
+  const omega = a => TAU * (P.f0 + P.sigma * a.z0);
+  // how clearly a shared pulse can be heard in the group's music: faint when scattered, clear once enough dancers coincide
+  const clarity = R => 1 / (1 + Math.exp(-(R - .45) / .07));
+
+  /* ---------- order parameters ---------- */
+  const M = { R:0, psi:0, S:0, Kbar:1, cx:0, cz:0 };
+  function measure(){
+    const n = A.length; let c = 0, s = 0, cx = 0, cz = 0;
+    for (const a of A) { c += Math.cos(a.th); s += Math.sin(a.th); cx += a.x; cz += a.z; }
+    M.R = Math.hypot(c, s) / n; M.psi = Math.atan2(s, c); M.cx = cx / n; M.cz = cz / n;
+    let p1c = 0, p1s = 0, p2c = 0, p2s = 0;
+    for (const a of A) { const f = Math.atan2(a.z - M.cz, a.x - M.cx); p1c += Math.cos(f + a.th); p1s += Math.sin(f + a.th); p2c += Math.cos(f - a.th); p2s += Math.sin(f - a.th); }
+    M.S = Math.max(Math.hypot(p1c, p1s), Math.hypot(p2c, p2s)) / n;
+    let kb = 0, m = 0; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (i !== j) { kb += Kij[i * n + j]; m++; } M.Kbar = m ? kb / m : 0;
+  }
+  // delayed mean field: what the dancers hear, a moment late
+  const HIST = 64, hR = new Float32Array(HIST), hPsi = new Float32Array(HIST); let hI = 0;
+
+  /* ---------- one step of the model ---------- */
+  const beats = [];
+  function step(){
+    const n = A.length, Kn = P.K / n;
+    measure();
+    hR[hI % HIST] = M.R; hPsi[hI % HIST] = M.psi; hI++;
+    const lag = Math.min(HIST - 1, Math.round(P.tau / DT)), di = (hI - 1 - lag + HIST * 4) % HIST;
+    const Rd = hR[di], Pd = hPsi[di] + TAU * P.f0 * P.tau;   // the beat heard now was played tau ago
+    const dth = new Float32Array(n), vx = new Float32Array(n), vz = new Float32Array(n), dph = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      const ai = A[i]; let sx = 0, sz = 0, sp = 0, alx = 0, alz = 0, atx = 0, atz = 0, rpx = 0, rpz = 0, nr = 0, al = 0;
+      for (let j = 0; j < n; j++) {
+        if (i === j) continue;
+        const aj = A[j], rx = aj.x - ai.x, rz = aj.z - ai.z, d = Math.sqrt(rx * rx + rz * rz) + 1e-6;
+        const dthij = aj.th - ai.th, c = Math.cos(dthij), s = Math.sin(dthij);
+        sp += Kij[i * n + j] * s / Math.max(d, .2);
+        if (P.mode === 'swarm') {
+          sx += rx / d * (1 + P.J * c) - rx / Math.max(d * d, .01); sz += rz / d * (1 + P.J * c) - rz / Math.max(d * d, .01);
+          if (P.v0 > 0) { const w = Math.exp(-d / .8); alx += Math.sin(aj.ph - ai.ph) * w; al += w; }
+        } else {
+          if (d < .3) { rpx -= rx / d; rpz -= rz / d; nr++; }
+          else if (d < .8) { alx += Math.cos(aj.ph); alz += Math.sin(aj.ph); }
+          else if (d < 1.8) { const w = 1 + P.J * c; atx += rx / d * w; atz += rz / d * w; }
+        }
+        if (P.adaptive) { const k = i * n + j; Kij[k] += P.eps * DT * (Math.cos(dthij + P.beta) - Kij[k]); }
+      }
+      dth[i] = omega(ai) + Kn * sp + (P.loop ? P.F * clarity(Rd) * Math.sin(Pd - ai.th) : 0);
+      if (P.mode === 'swarm') {
+        vx[i] = sx / n + P.v0 * Math.cos(ai.ph); vz[i] = sz / n + P.v0 * Math.sin(ai.ph);
+        dph[i] = al ? 1.5 * alx / al : 0;
+      } else {
+        let dx, dz;
+        if (nr) { dx = rpx; dz = rpz; } else { dx = alx + atx; dz = alz + atz; if (!dx && !dz) { dx = Math.cos(ai.ph); dz = Math.sin(ai.ph); } }
+        const want = Math.atan2(dz, dx), turn = wrap(want - ai.ph);
+        dph[i] = Math.max(-3, Math.min(3, turn * 4));
+        const spd = .35 + P.v0; vx[i] = spd * Math.cos(ai.ph); vz[i] = spd * Math.sin(ai.ph);
+      }
+      // soft wall at the edge of the floor
+      const rr = Math.hypot(ai.x, ai.z); if (rr > RF * .88) { const k = (rr - RF * .88) * 4; vx[i] -= ai.x / rr * k; vz[i] -= ai.z / rr * k; if (P.mode === 'couzin') dph[i] += wrap(Math.atan2(-ai.z, -ai.x) - ai.ph) * 2; }
+    }
+    const sq = Math.sqrt(2 * P.noise * DT);
+    for (let i = 0; i < n; i++) {
+      const a = A[i], before = a.th;
+      a.th += dth[i] * DT + sq * gauss();
+      a.x += vx[i] * DT; a.z += vz[i] * DT; a.vx = vx[i]; a.vz = vz[i];
+      a.ph += dph[i] * DT + (P.mode === 'couzin' || P.v0 > 0 ? .3 * Math.sqrt(DT) * gauss() : 0);
+      if (Math.floor(a.th / TAU) !== Math.floor(before / TAU)) { a.beat = 1; beats.push(i); }
+    }
+    if (P.adaptive) for (let k = 0; k < Kij.length; k++) Kij[k] = Math.max(-1, Math.min(1, Kij[k]));
+    t += DT;
+    sweepStep();
+  }
+
+  /* ---------- records: time series, states, early warning ---------- */
+  const REC = { t:[], R:[], K:[], S:[] }; const LEN = 600;   // 60 s at 10 Hz
+  let recClock = 0, state = 'apart', since = 0, transitions = 0, pend = null, pendT = 0;
+  const LOG = [];
+  function log(msg){ LOG.unshift({ msg, t }); LOG.length = Math.min(LOG.length, 8); $('#log').innerHTML = LOG.map(l => `<li>${l.msg}<small>at ${fmtT(l.t)}</small></li>`).join(''); }
+  const fmtT = s => { const m = Math.floor(s / 60), r = Math.floor(s % 60); return `${m}:${String(r).padStart(2, '0')}`; };
+  function record(){
+    REC.t.push(t); REC.R.push(M.R); REC.K.push(M.Kbar); REC.S.push(M.S);
+    if (REC.t.length > LEN) for (const k in REC) REC[k].shift();
+    const prev = state;
+    const cand = state !== 'together' && M.R > .7 ? 'together' : state !== 'apart' && M.R < .3 ? 'apart' : null;
+    if (cand) { if (cand !== pend) { pend = cand; pendT = t; } else if (t - pendT >= 2) { state = cand; pend = null; } }
+    else if (pend && (pend === 'together' ? M.R < .55 : M.R > .45)) pend = null;
+    if (state !== prev) { transitions++; log(state === 'together' ? `The group tipped into synchrony after ${fmtT(t - since)} apart.` : `The group fell out of synchrony after ${fmtT(t - since)} together.`); since = t; }
+    if (rec && t - rec.t0 > .5) {
+      if (M.R >= .9 * rec.R0) { log(`Recovered its synchrony ${(t - rec.t0).toFixed(1)} s after the nudge. Slower recovery means the group is nearer the edge.`); rec = null; }
+      else if (t - rec.t0 > 30) { log('Thirty seconds after the nudge the group has not recovered: the disturbance tipped it into the other state.'); rec = null; }
+    }
+  }
+  function ews(){
+    const W = 150, R = REC.R; if (R.length < W + 2) return null;
+    const out = { v:[], a:[] };
+    for (let e = W; e <= R.length; e += 5) {
+      const w = R.slice(e - W, e), m = w.reduce((x, y) => x + y, 0) / W;
+      let v = 0, c = 0; for (let k = 0; k < W; k++) { v += (w[k] - m) ** 2; if (k >= 10) c += (w[k] - m) * (w[k - 10] - m); }
+      out.v.push(v / W); out.a.push(v ? c / v : 0);
+    }
+    return out;
+  }
+
+  /* ---------- sweep ---------- */
+  let SW = null;
+  function sweepStep(){
+    if (!SW) return; SW.t += DT; const half = 60, Kmax = 2.6;
+    const up = SW.t < half; P.K = up ? Kmax * SW.t / half : Kmax * (2 - SW.t / half);
+    if ((SW.t % .25) < DT) (up ? SW.up : SW.dn).push([P.K, M.R]);
+    if (SW.t >= 2 * half) {
+      const sm = a => a.map((p, k) => [p[0], a.slice(Math.max(0, k - 4), k + 5).reduce((x, y) => x + y[1], 0) / (Math.min(a.length, k + 5) - Math.max(0, k - 4))]);
+      const U = sm(SW.up), D = sm(SW.dn), cu = U.find(p => p[1] > .6), cd = [...D].reverse().find(p => p[1] > .6);
+      if (cu && cd) { const gap = cu[0] - cd[0]; log(`Sweep: synchrony appeared at coupling ${cu[0].toFixed(2)} on the way up and was lost at ${cd[0].toFixed(2)} on the way down. ${gap > .2 ? 'The group entered synchrony at a higher coupling than it left it: a sign of hysteresis, though a quick sweep can exaggerate the gap, so run it again to check.' : gap < -.2 ? 'It left synchrony at a higher coupling than it entered it. In a group this small, chance fluctuations can make one sweep misleading; run it again or add dancers.' : 'Little gap: the transition is close to reversible.'}`); }
+      else log('Sweep finished without the group passing 0.6 synchrony in both directions. Try less tempo spread or a stronger closed loop.');
+      P.K = SW.K0; SW.done = true; const keep = SW; SW = null; lastSweep = keep; syncControls(); $('#sweep').disabled = false;
+    }
+  }
+  let lastSweep = null;
+  $('#sweep').onclick = () => { for (const a of A) a.th = rnd() * TAU; SW = { t:0, up:[], dn:[], K0:P.K }; lastSweep = SW; $('#sweep').disabled = true; log('Sweep started: the dancers’ rhythms are scattered, then coupling rises from 0 for one minute and falls back.'); };
+
+  /* ---------- nudge (click the floor) ---------- */
+  let rec = null;
+  function nudge(px, pz){
+    let n = 0; const R0 = REC.R.length > 30 ? REC.R.slice(-30).reduce((a, b) => a + b, 0) / 30 : M.R;
+    for (const a of A) { if (Math.hypot(a.x - px, a.z - pz) < 1.1) { a.th += (rnd() * 2 - 1) * Math.PI; a.glow = 1; n++; } }
+    ripple(px * SC, pz * SC, '#ffffff', 9);
+    if (!n) return;
+    if (R0 > .45) { rec = { t0:t, R0 }; log(`A nudge scrambles the rhythm of ${n} dancer${n === 1 ? '' : 's'}. Watching how long the group takes to recover.`); }
+    else log(`A nudge scrambles the rhythm of ${n} dancer${n === 1 ? '' : 's'}. The group was not synchronized, so there is nothing to recover yet.`);
+  }
+
+  /* ---------- three.js scene ---------- */
+  let renderer;
+  try { renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true }); } catch (e) { $('#hint').textContent = 'This model needs WebGL, which is turned off in this browser.'; return; }
+  renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+  stage.prepend(renderer.domElement);
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x0c0f1a, 30, 70);
+  const camera = new THREE.PerspectiveCamera(48, 1, .1, 200);
+  camera.position.set(0, 14, 18);
+  let zh;
+  stage.addEventListener('wheel', ev => { if (ev.ctrlKey || ev.metaKey) return; ev.stopPropagation(); const z = $('#zoomhint'); z.style.opacity = 1; clearTimeout(zh); zh = setTimeout(() => { z.style.opacity = 0; }, 1400); }, { capture:true });
+  if (matchMedia('(pointer: coarse)').matches) $('#hint').textContent = 'Drag to turn, pinch to zoom. Tap the floor to scramble the rhythm of the dancers nearby. Each dancer’s color is their place in their own beat.';
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  Object.assign(controls, { enableDamping:true, enablePan:false, minDistance:8, maxDistance:50, maxPolarAngle:1.45, autoRotate:!reduce, autoRotateSpeed:.25 });
+  controls.target.set(0, .8, 0);
+  scene.add(new THREE.HemisphereLight(0x8fa3ff, 0x0c0f1a, .55));
+  const spot = new THREE.SpotLight(0xfff4e0, 1.3, 60, .7, .6); spot.position.set(0, 22, 4); scene.add(spot);
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(RF * SC, 96), new THREE.MeshStandardMaterial({ color:0x141a2c, roughness:.55, metalness:.2 }));
+  floor.rotation.x = -Math.PI / 2; scene.add(floor);
+  for (let k = 1; k <= 4; k++) { const g = new THREE.RingGeometry(RF * SC * k / 4 - .03, RF * SC * k / 4, 128); const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color:0x2a3352, transparent:true, opacity:.6 })); m.rotation.x = -Math.PI / 2; m.position.y = .01; scene.add(m); }
+  // the mean-phase ring around the floor
+  const ringR = RF * SC + 1.2;
+  const pRing = new THREE.Mesh(new THREE.TorusGeometry(ringR, .05, 8, 160), new THREE.MeshBasicMaterial({ color:0x39405a })); pRing.rotation.x = -Math.PI / 2; pRing.position.y = .05; scene.add(pRing);
+  const canvasTex = paint => { const c = document.createElement('canvas'); c.width = c.height = 128; paint(c.getContext('2d')); return new THREE.CanvasTexture(c); };
+  const dotTex = canvasTex(g => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.6)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); });
+  const psiDot = new THREE.Sprite(new THREE.SpriteMaterial({ map:dotTex, color:0xf2c862, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false })); psiDot.scale.setScalar(2.4); scene.add(psiDot);
+  const centerGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map:dotTex, color:0xf2c862, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:0 })); centerGlow.scale.setScalar(10); scene.add(centerGlow);
+
+  // dancers
+  let figs = [];
+  const bodyGeo = new THREE.CapsuleGeometry(.32, 1.0, 6, 14), headGeo = new THREE.SphereGeometry(.27, 18, 14), noseGeo = new THREE.ConeGeometry(.12, .35, 10);
+  const shadowGeo = new THREE.CircleGeometry(.55, 24);
+  function buildFigures(){
+    for (const f of figs) scene.remove(f.g);
+    figs = A.map((a, i) => {
+      const g = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({ color:0xffffff, emissive:0xffffff, emissiveIntensity:.35, roughness:.45 });
+      const body = new THREE.Mesh(bodyGeo, mat); body.position.y = .9;
+      const head = new THREE.Mesh(headGeo, mat); head.position.y = 1.95;
+      const nose = new THREE.Mesh(noseGeo, mat); nose.rotation.z = -Math.PI / 2; nose.position.set(.42, 1.55, 0);
+      const sh = new THREE.Mesh(shadowGeo, new THREE.MeshBasicMaterial({ color:0x000000, transparent:true, opacity:.35 })); sh.rotation.x = -Math.PI / 2; sh.position.y = .02;
+      const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map:dotTex, blending:THREE.AdditiveBlending, transparent:true, depthWrite:false, opacity:.0 })); halo.scale.setScalar(2.6); halo.position.y = 1.2;
+      const fig = new THREE.Group(); fig.add(body, head, nose, halo);
+      g.add(fig, sh); g.userData.i = i; body.userData.i = i; head.userData.i = i;
+      scene.add(g);
+      return { g, fig, mat, halo, body, head };
+    });
+  }
+  // coupling threads
+  const MAXL = 30 * 29 / 2;
+  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(MAXL * 6), 3)); lg.setAttribute('color', new THREE.BufferAttribute(new Float32Array(MAXL * 6), 3));
+  const lines = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ vertexColors:true, transparent:true, blending:THREE.AdditiveBlending, depthWrite:false })); scene.add(lines);
+  // beat ripples on the floor
+  const ripples = [], ringGeo = new THREE.RingGeometry(.92, 1, 48);
+  function ripple(x, z, color, size){ if (reduce || ripples.length > 60) return; const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.7, blending:THREE.AdditiveBlending, depthWrite:false })); m.rotation.x = -Math.PI / 2; m.position.set(x, .03, z); scene.add(m); ripples.push({ m, t:0, size }); }
+
+  /* ---------- sound ---------- */
+  const sound = (() => {
+    let ctx = null, master, padBus, pads = [], playing = false, vol = .6, lastPsi = 0;
+    function init(){
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      master = ctx.createGain(); master.gain.value = 0;
+      const comp = ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
+      const len = ctx.sampleRate * 2.6, buf = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+      const rv = ctx.createConvolver(); rv.buffer = buf; const wet = ctx.createGain(); wet.gain.value = .35; rv.connect(wet); wet.connect(master); master.rv = rv;
+      padBus = ctx.createGain(); padBus.gain.value = 0; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500; padBus.connect(lp); lp.connect(master); lp.connect(rv); padBus.lp = lp;
+      [73.42, 110, 146.83, 155.56].forEach((f, k) => { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; const g = ctx.createGain(); g.gain.value = 0; o.connect(g); g.connect(padBus); o.start(); pads.push({ o, g, f, k }); });
+      document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else if (playing) ctx.resume(); });
+    }
+    function note(freq, pan, gain){
+      const t0 = ctx.currentTime + .01, o = ctx.createOscillator(), o2 = ctx.createOscillator(), e = ctx.createGain(), pn = ctx.createStereoPanner();
+      o.type = 'sine'; o.frequency.value = freq; o2.type = 'triangle'; o2.frequency.value = freq * 4.01;
+      const g2 = ctx.createGain(); g2.gain.value = .12; o2.connect(g2); g2.connect(e);
+      e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(gain, t0 + .004); e.gain.exponentialRampToValueAtTime(.0001, t0 + .55);
+      o.connect(e); e.connect(pn); pn.pan.value = pan; pn.connect(master); pn.connect(master.rv);
+      o.start(t0); o2.start(t0); o.stop(t0 + .6); o2.stop(t0 + .6);
+    }
+    function drum(gain){
+      const t0 = ctx.currentTime + .01, o = ctx.createOscillator(), e = ctx.createGain();
+      o.frequency.setValueAtTime(110, t0); o.frequency.exponentialRampToValueAtTime(48, t0 + .18);
+      e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(gain, t0 + .005); e.gain.exponentialRampToValueAtTime(.0001, t0 + .4);
+      o.connect(e); e.connect(master); o.start(t0); o.stop(t0 + .45);
+    }
+    return {
+      toggle(){ if (!ctx) init(); playing = !playing; if (playing) { ctx.resume(); master.gain.setTargetAtTime(vol * .8, ctx.currentTime, .3); } else master.gain.setTargetAtTime(0, ctx.currentTime, .2); return playing; },
+      volume(v){ vol = v; if (ctx && playing) master.gain.setTargetAtTime(vol * .8, ctx.currentTime, .2); },
+      frame(beatsNow){
+        if (!ctx || !playing) return;
+        const n = A.length, g = .16 / Math.sqrt(n);
+        for (const i of beatsNow.slice(0, 12)) { const a = A[i]; note(a.pitch, Math.max(-.9, Math.min(.9, a.x / RF)), g); }
+        // the group's pulse: clearer as the group synchronizes
+        if (wrap(M.psi - lastPsi) < 0 && Math.cos(M.psi) > .95 && M.R > .35) { drum(.35 * (M.R - .3) / .7); lastPsi = M.psi + .5; } else if (Math.cos(M.psi) < .5) lastPsi = M.psi;
+        // the sustained chord: consonant when together, clouded when apart
+        const now = ctx.currentTime;
+        padBus.gain.setTargetAtTime(.05 + .07 * M.R, now, .3);
+        padBus.lp.frequency.setTargetAtTime(300 + 1500 * M.R * M.R, now, .3);
+        for (const p of pads) {
+          const dis = p.k === 3;
+          p.g.gain.setTargetAtTime(dis ? .5 * (1 - M.R) : .35, now, .4);
+          p.o.detune.setTargetAtTime((1 - M.R) * (p.k % 2 ? 18 : -14), now, .4);
+        }
+      }
+    };
+  })();
+  $('#sound').onclick = () => { const v = sound.toggle(); $('#sound').textContent = v ? 'Sound on' : 'Sound off'; $('#sound').setAttribute('aria-pressed', v); };
+  $('#vol').oninput = e => sound.volume(+e.target.value);
+
+  /* ---------- interaction ---------- */
+  let Wd = 1, Hd = 1;
+  new ResizeObserver(() => { Wd = stage.clientWidth; Hd = stage.clientHeight; renderer.setSize(Wd, Hd, false); camera.aspect = Wd / Hd; camera.updateProjectionMatrix(); }).observe(stage);
+  const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
+  const setPtr = ev => { const r = renderer.domElement.getBoundingClientRect(); ptr.set((ev.clientX - r.left) / r.width * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, camera); };
+  renderer.domElement.addEventListener('pointermove', ev => {
+    setPtr(ev); const h = ray.intersectObjects(figs.flatMap(f => [f.body, f.head]))[0];
+    if (!h) { tip.style.display = 'none'; return; }
+    const i = h.object.userData.i, a = A[i], n = A.length; if (!a) return;
+    let strong = 0; for (let j = 0; j < n; j++) if (j !== i && Kij[i * n + j] > .6) strong++;
+    const rel = wrap(a.th - M.psi);
+    tip.innerHTML = `<b>Dancer ${i + 1}</b><br>Natural tempo ${(60 * omega(a) / TAU).toFixed(0)} cycles a minute. ${Math.abs(rel) < .5 ? 'In step with the group.' : rel > 0 ? 'Ahead of the group by ' + Math.round(rel / TAU * 100) + '% of a cycle.' : 'Behind the group by ' + Math.round(-rel / TAU * 100) + '% of a cycle.'}${P.adaptive ? ` Strongly coupled to ${strong} other${strong === 1 ? '' : 's'}.` : ''}`;
+    const r = stage.getBoundingClientRect(); tip.style.display = 'block'; tip.style.left = Math.min(ev.clientX - r.left + 14, Wd - 270) + 'px'; tip.style.top = Math.max(8, ev.clientY - r.top - 10) + 'px';
+  });
+  renderer.domElement.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
+  let down = null;
+  renderer.domElement.addEventListener('pointerdown', ev => { down = [ev.clientX, ev.clientY]; });
+  renderer.domElement.addEventListener('pointerup', ev => {
+    if (!down || Math.hypot(ev.clientX - down[0], ev.clientY - down[1]) > 6) return;
+    setPtr(ev); const pt = new V(); if (!ray.ray.intersectPlane(new THREE.Plane(new V(0, 1, 0), 0), pt)) return;
+    if (Math.hypot(pt.x, pt.z) > RF * SC) return;
+    nudge(pt.x / SC, pt.z / SC);
+  });
+
+  /* ---------- controls ---------- */
+  const fmtN = { N:v => v, K:v => (+v).toFixed(2), sigma:v => `±${Math.round(v * 60)} cycles a minute`, J:v => (+v).toFixed(2), v0:v => (+v).toFixed(2), noise:v => (+v).toFixed(2), eps:v => (+v).toFixed(2), beta:v => (+v).toFixed(2), F:v => (+v).toFixed(2) };
+  const MAP = { kN:'N', kK:'K', kS:'sigma', kJ:'J', kV:'v0', kD:'noise', kE:'eps', kB:'beta', kF:'F' };
+  const OUT = { N:'vN', K:'vK', sigma:'vS', J:'vJ', v0:'vV', noise:'vD', eps:'vE', beta:'vB', F:'vF' };
+  function syncControls(){
+    for (const id in MAP) { const k = MAP[id]; $('#' + id).value = P[k]; $('#' + OUT[k]).textContent = fmtN[k](P[k]); }
+    $('#kA').checked = P.adaptive; $('#kL').checked = P.loop; $('#kE').disabled = $('#kB').disabled = !P.adaptive; $('#kF').disabled = !P.loop; $('#kK').disabled = !!SW;
+    for (const b of document.querySelectorAll('#mode button')) b.setAttribute('aria-pressed', b.dataset.v === P.mode);
+  }
+  for (const id in MAP) $('#' + id).oninput = e => { const k = MAP[id]; P[k] = +e.target.value; if (k === 'N') resize(P.N); syncControls(); };
+  $('#kA').onchange = e => { P.adaptive = e.target.checked; resetCoupling(); syncControls(); log(P.adaptive ? 'Adaptive coupling on: pairs who move in phase now bind more tightly.' : 'Adaptive coupling off: every pair is coupled equally again.'); };
+  $('#kL').onchange = e => { P.loop = e.target.checked; syncControls(); log(P.loop ? 'Loop closed: the dancers hear the group’s pulse and lean toward it.' : 'Loop opened: the music is still played, but the dancers no longer respond to it.'); };
+  $('#mode').onclick = e => { const b = e.target.closest('button'); if (!b) return; P.mode = b.dataset.v; syncControls(); log(P.mode === 'couzin' ? 'Movement now follows Couzin’s zones: keep apart when too close, align with neighbors, move toward those further away.' : 'Movement now follows the swarmalator rule: drawn together, more so toward those in phase.'); };
+  $('#restart').onclick = () => { spawn(P.N); buildFigures(); log('New dancers take the floor.'); };
+  const SPEEDS = [.5, 1, 2, 4], SPL = ['Half speed', 'Real time', 'Twice as fast', 'Four times as fast'];
+  $('#speed').oninput = e => { P.speed = SPEEDS[+e.target.value]; $('#speedl').textContent = SPL[+e.target.value]; };
+  let run = !reduce; const play = $('#play');
+  const syncPlay = () => { play.textContent = run ? 'Pause' : 'Play'; play.setAttribute('aria-pressed', !run); };
+  play.onclick = () => { run = !run; syncPlay(); }; syncPlay();
+
+  const PRESETS = [
+    { n:'Drifting apart', s:'Weak coupling, varied tempos', p:{ K:.3, sigma:.2, J:.3, v0:0, noise:.05, mode:'swarm', adaptive:false, loop:false } },
+    { n:'At the edge', s:'Poised between two states', p:{ K:.9, sigma:.25, J:.5, v0:0, noise:.08, mode:'swarm', adaptive:false, loop:true, F:1 } },
+    { n:'Locked together', s:'Strong coupling and music', p:{ K:2, sigma:.1, J:.6, v0:0, noise:.04, mode:'swarm', adaptive:false, loop:true, F:1.5 } },
+    { n:'Learning to sync', s:'Coupling learns from moving together', p:{ K:1.4, sigma:.15, J:.5, v0:0, noise:.06, mode:'swarm', adaptive:true, eps:.12, beta:0, loop:true, F:.8 } },
+    { n:'Restless', s:'Non-reciprocal learning, metastable', p:{ K:2, sigma:.1, J:.4, v0:0, noise:.06, mode:'swarm', adaptive:true, eps:.15, beta:.6, loop:false } },
+    { n:'Phase wave', s:'Identical tempos, phase sets position', p:{ K:0, sigma:0, J:1, v0:0, noise:0, mode:'swarm', adaptive:false, loop:false } },
+    { n:'Traveling together', s:'Directional swarmalators', p:{ K:1.2, sigma:.08, J:.6, v0:.3, noise:.05, mode:'swarm', adaptive:false, loop:true, F:1 } },
+    { n:'Flock', s:'Couzin zones with phase coupling', p:{ K:1.2, sigma:.1, J:.5, v0:.1, noise:.05, mode:'couzin', adaptive:false, loop:true, F:1 } } ];
+  $('#presets').innerHTML = PRESETS.map((q, i) => `<button data-i="${i}">${q.n}<small>${q.s}</small></button>`).join('');
+  $('#presets').onclick = e => { const b = e.target.closest('button'); if (!b) return; const q = PRESETS[+b.dataset.i]; Object.assign(P, q.p); resetCoupling(); syncControls(); log(`Scenario: ${q.n.toLowerCase()}. ${q.s}.`); };
+
+  /* ---------- panel ---------- */
+  const row = (k, v, note) => `<div class="row"><span>${k}</span><b>${v}</b>${note ? `<em>${note}</em>` : ''}</div>`;
+  function renderStats(){
+    const last = REC.R.slice(-300), mean = last.reduce((a, b) => a + b, 0) / (last.length || 1);
+    const meta = Math.sqrt(last.reduce((a, b) => a + (b - mean) ** 2, 0) / (last.length || 1));
+    const E = ews(); let trend = '';
+    if (E && E.v.length > 8) { const v = E.v, a = E.a, k = Math.floor(v.length / 2); const dv = v.slice(-k).reduce((x, y) => x + y, 0) / k - v.slice(0, k).reduce((x, y) => x + y, 0) / k; const da = a.slice(-k).reduce((x, y) => x + y, 0) / k - a.slice(0, k).reduce((x, y) => x + y, 0) / k; trend = dv > 0 && da > 0 ? 'Both rising: the group may be nearing a transition.' : dv < 0 && da < 0 ? 'Both falling: the group is settling.' : 'Mixed signals: no clear approach to a transition.'; }
+    let h = '<h2>The group now</h2>';
+    h += row('Phase synchrony R', M.R.toFixed(2), '0 when everyone keeps their own beat, 1 when all move as one');
+    h += row('Space–phase order S', M.S.toFixed(2), 'High when where a dancer stands predicts their phase, as in a phase wave');
+    h += row('Mean learned coupling', P.adaptive ? M.Kbar.toFixed(2) : 'fixed at 1', P.adaptive ? 'Rises as pairs learn to move together; below 0, pairs push each other apart in phase' : 'Turn on adaptive coupling to let it learn');
+    h += row('Metastability', meta.toFixed(2), 'Spread of synchrony over the last 30 seconds: high when the group keeps switching');
+    h += row('State', `${state === 'together' ? 'Together' : 'Apart'} for ${fmtT(t - since)}`, `${transitions} transition${transitions === 1 ? '' : 's'} so far. ${trend}`);
+    $('#stats').innerHTML = h;
+    $('#stateName').textContent = M.R > .7 ? 'Together' : M.R < .3 ? 'Apart' : 'At the edge';
+    $('#stateName').style.color = M.R > .7 ? '#f2c862' : M.R < .3 ? '#f08aa5' : '#e9ecf5';
+    $('#stateSub').textContent = `phase synchrony ${M.R.toFixed(2)}`;
+  }
+  function chartCtx(id){ const c = $(id), r = c.getBoundingClientRect(), d = Math.min(2, devicePixelRatio); if (c.width !== Math.round(r.width * d)) { c.width = Math.round(r.width * d); c.height = Math.round(r.height * d); } const g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, r.width, r.height); return [g, r.width, r.height]; }
+  function axes(g, w, h, ylab){ g.strokeStyle = '#262c40'; g.lineWidth = 1; for (let k = 0; k <= 4; k++) { const y = 8 + (h - 22) * k / 4; g.beginPath(); g.moveTo(30, y); g.lineTo(w - 6, y); g.stroke(); } g.fillStyle = '#7e869c'; g.font = '11px Inter, sans-serif'; g.fillText(ylab[0], 4, 14); g.fillText(ylab[1], 4, h - 12); }
+  function line(g, xs, ys, w, h, col, y0 = 0, y1 = 1){ if (xs.length < 2) return; g.strokeStyle = col; g.lineWidth = 1.6; g.beginPath(); xs.forEach((x, k) => { const px = 30 + (w - 36) * x, py = 8 + (h - 22) * (1 - (ys[k] - y0) / (y1 - y0)); k ? g.lineTo(px, py) : g.moveTo(px, py); }); g.stroke(); }
+  function drawCharts(){
+    // time series
+    let [g, w, h] = chartCtx('#cTime'); axes(g, w, h, ['1', '0']);
+    const n = REC.t.length, xs = REC.t.map((_, k) => k / (LEN - 1));
+    line(g, xs, REC.S, w, h, '#b69cf2'); line(g, xs, REC.K.map(k => (k + 1) / 2), w, h, '#4fd1c5'); line(g, xs, REC.R, w, h, '#f2c862');
+    g.fillStyle = '#7e869c'; g.fillText('last 60 seconds', w - 96, h - 2);
+    // landscape
+    [g, w, h] = chartCtx('#cLand');
+    const B = 40, hist = new Float32Array(B); for (const r of REC.R) hist[Math.min(B - 1, Math.floor(r * B))]++;
+    const sm = new Float32Array(B); for (let i = 0; i < B; i++) { let s = 0, ws = 0; for (let j = -3; j <= 3; j++) { const k = i + j; if (k < 0 || k >= B) continue; const wt = Math.exp(-j * j / 4); s += hist[k] * wt; ws += wt; } sm[i] = s / ws; }
+    const tot = sm.reduce((a, b) => a + b, 0) || 1, U = Array.from(sm, v => -Math.log(v / tot + 2e-3));
+    const umin = Math.min(...U), umax = Math.max(...U), Un = U.map(u => (u - umin) / (umax - umin || 1));
+    g.strokeStyle = '#262c40'; g.beginPath(); g.moveTo(30, h - 14); g.lineTo(w - 6, h - 14); g.stroke();
+    g.fillStyle = '#7e869c'; g.font = '11px Inter, sans-serif'; g.fillText('apart', 30, h - 2); g.fillText('together', w - 56, h - 2); g.fillText('R', (w + 24) / 2, h - 2);
+    if (REC.R.length > 50) {
+      g.strokeStyle = '#9cc8f2'; g.lineWidth = 2; g.beginPath(); Un.forEach((u, i) => { const px = 30 + (w - 36) * (i + .5) / B, py = 10 + (h - 30) * (1 - u); i ? g.lineTo(px, py) : g.moveTo(px, py); }); g.stroke();
+      const bi = Math.min(B - 1, Math.floor(M.R * B)), bx = 30 + (w - 36) * (bi + .5) / B, by = 10 + (h - 30) * (1 - Un[bi]) - 7;
+      g.fillStyle = '#f2c862'; g.beginPath(); g.arc(bx, by, 6, 0, TAU); g.fill();
+    } else { g.fillStyle = '#7e869c'; g.fillText('Building up history…', 40, h / 2); }
+    // early warning
+    [g, w, h] = chartCtx('#cEWS'); axes(g, w, h, ['high', 'low']);
+    const E = ews();
+    if (E) { const xe = E.v.map((_, k) => (k * 5 + 150) / (LEN - 1)); const vm = Math.max(...E.v, 1e-4); line(g, xe, E.v.map(v => v / vm), w, h, '#f08aa5'); line(g, xe, E.a.map(a => (a + 1) / 2), w, h, '#9cc8f2'); }
+    else { g.fillStyle = '#7e869c'; g.fillText('Needs 15 seconds of history…', 40, h / 2); }
+    // sweep
+    [g, w, h] = chartCtx('#cSweep'); axes(g, w, h, ['R 1', '0']);
+    g.fillStyle = '#7e869c'; g.fillText('coupling 0 → 2.6', w - 104, h - 2);
+    const S = SW || lastSweep;
+    if (S) { const f = p => p[0] / 2.6; line(g, S.up.map(f), S.up.map(p => p[1]), w, h, '#f2c862'); line(g, S.dn.map(f), S.dn.map(p => p[1]), w, h, '#4fd1c5'); }
+  }
+
+  /* ---------- frame loop ---------- */
+  const clock = new THREE.Clock(); let acc = 0, ui = 0;
+  const col = new THREE.Color(), tmp = new V();
+  function frame(){
+    requestAnimationFrame(frame);
+    const dt = Math.min(.05, clock.getDelta());
+    beats.length = 0;
+    if (run) { acc += dt * P.speed; let k = 0; while (acc >= DT && k++ < 400) { step(); acc -= DT; recClock += DT; if (recClock >= .1) { recClock = 0; record(); } } }
+    sound.frame(beats);
+    for (const i of beats) { const a = A[i]; if (a && figs[i]) { col.setHSL(((a.th % TAU) + TAU) % TAU / TAU, .7, .62); if (A.length <= 20 || i % 2 === 0) ripple(a.x * SC, a.z * SC, col.getHex(), 1.6); } }
+    const n = A.length;
+    figs.forEach((f, i) => {
+      const a = A[i]; if (!a) return;
+      const hue = ((a.th % TAU) + TAU) % TAU / TAU;
+      col.setHSL(hue, .72, .6); f.mat.color.copy(col); f.mat.emissive.copy(col);
+      a.beat = Math.max(0, a.beat - dt * 3); a.glow = Math.max(0, a.glow - dt * .8);
+      f.mat.emissiveIntensity = .25 + .6 * a.beat + .6 * a.glow;
+      f.g.position.set(a.x * SC, 0, a.z * SC);
+      f.fig.position.y = reduce ? 0 : .22 * (1 - Math.cos(a.th));
+      const facing = (P.mode === 'couzin' || P.v0 > 0) ? a.ph : (Math.hypot(a.vx, a.vz) > .02 ? Math.atan2(a.vz, a.vx) : Math.atan2(M.cz - a.z, M.cx - a.x));
+      f.fig.rotation.y = -facing;
+      f.halo.material.color.copy(col); f.halo.material.opacity = .25 + .5 * a.beat;
+    });
+    // threads of learned coupling
+    const lp = lg.attributes.position, lc = lg.attributes.color; let m = 0;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const k = P.adaptive ? (Kij[i * n + j] + Kij[j * n + i]) / 2 : 0; if (k < .45) continue;
+      const a = A[i], b = A[j]; if (Math.hypot(a.x - b.x, a.z - b.z) > 1.6) continue;
+      const s = (k - .45) / .55 * .8;
+      lp.setXYZ(m * 2, a.x * SC, 1.3, a.z * SC); lp.setXYZ(m * 2 + 1, b.x * SC, 1.3, b.z * SC);
+      lc.setXYZ(m * 2, .31 * s, .82 * s, .77 * s); lc.setXYZ(m * 2 + 1, .31 * s, .82 * s, .77 * s); m++;
+    }
+    lg.setDrawRange(0, m * 2); lp.needsUpdate = lc.needsUpdate = true;
+    // mean phase marker and center glow
+    psiDot.position.set(Math.cos(M.psi) * ringR, .4, Math.sin(M.psi) * ringR); psiDot.material.opacity = .15 + .85 * M.R; psiDot.scale.setScalar(1 + 1.3 * M.R);
+    centerGlow.position.set(M.cx * SC, .3, M.cz * SC); centerGlow.material.opacity = Math.max(0, (M.R - .3) / .7) * .35;
+    for (let i = ripples.length - 1; i >= 0; i--) { const r = ripples[i]; r.t += dt / .9; r.m.scale.setScalar(.3 + r.size * r.t); r.m.material.opacity = .6 * (1 - r.t); if (r.t >= 1) { scene.remove(r.m); r.m.material.dispose(); ripples.splice(i, 1); } }
+    controls.update(); renderer.render(scene, camera);
+    ui += dt; if (ui > .25) { ui = 0; renderStats(); drawCharts(); }
+  }
+  spawn(P.N); buildFigures(); syncControls(); measure();
+  log('The dancers begin at the edge: each at their own tempo, with the loop closed. Watch them tip in and out of synchrony.');
+  window.__eos = { P, M, A:() => A, step, fast(sec){ const k = Math.round(sec / DT); for (let i = 0; i < k; i++) { step(); recClock += DT; if (recClock >= .1) { recClock = 0; record(); } } renderStats(); }, REC, sweep:() => $('#sweep').click(), get SW(){ return SW; }, get last(){ return lastSweep; }, spawn:n => { spawn(n); buildFigures(); }, resetCoupling };
+  frame();
+}
+main();
+}
+</script>
+</body>
+</html>
