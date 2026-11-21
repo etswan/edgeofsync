@@ -80,6 +80,11 @@ details p,details li{font-size:15px}
 details ul{padding-left:18px}
 .tag{display:inline-block;font-size:12px;padding:0 6px;border-radius:4px;margin-left:4px;vertical-align:1px}
 .t-pub{background:#dbe8f6;color:#1f4f80}.t-new{background:#f6dde8;color:#86284e}.t-ill{background:#f4ead0;color:#6e5400}
+.dlab{position:absolute;left:0;top:0;font-size:12px;line-height:1.3;text-align:center;color:var(--mute);background:rgba(255,255,255,.85);border:1px solid var(--line);border-radius:6px;padding:3px 8px;pointer-events:none;white-space:nowrap}.dlab b{display:block;color:var(--ink);font-size:13px}
+.heatbar{height:10px;border-radius:5px;background:linear-gradient(90deg,#c3ccd8,#8ea6c8 60%,#f2b04a 80%,#e2632b 93%,#b31d2c);margin:6px 0 2px}
+.heatlab{display:flex;justify-content:space-between;font-size:12px;color:var(--mute)}
+.statekey{display:grid;gap:6px;margin-top:8px}.statekey div{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:8px;align-items:start;font-size:13px;color:var(--mute);padding:4px 6px;border-radius:6px}
+.statekey div.on{background:#fff;border:1px solid var(--line)}.statekey i{width:12px;height:12px;border-radius:3px;margin-top:3px}.statekey b{color:var(--ink);font-weight:600}.statekey em{font-style:normal;font-variant-numeric:tabular-nums}
 .refs{list-style:none;padding:0}.refs li{padding-left:1.4em;text-indent:-1.4em;margin-bottom:6px;font-size:14px}
 a{color:#1d7f76}
 .snd{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;margin-top:10px}
@@ -102,7 +107,7 @@ a{color:#1d7f76}
     <div class="badge" id="badge"><b id="stateName">Apart</b><span id="stateSub">phase synchrony 0.00</span></div>
     <div class="tip" id="tip"></div>
     <div class="zoomhint" id="zoomhint">Hold Ctrl (⌘ on a Mac) and scroll to zoom</div>
-    <p class="hint" id="hint">Drag to turn; pinch, or hold Ctrl (⌘) and scroll, to zoom. Click the floor to scramble the rhythm of the dancers nearby and watch whether the group recovers. Each dancer’s color is their place in their own beat.</p>
+    <p class="hint" id="hint">Drag to turn; pinch, or hold Ctrl (⌘) and scroll, to zoom. Click the floor to scramble the rhythm of the dancers nearby and watch whether the group recovers. Body color shows each dancer’s local synchrony.</p>
   </div>
   <aside class="panel">
     <h1>The model</h1>
@@ -122,6 +127,10 @@ a{color:#1d7f76}
     <h2>Start from a scenario</h2>
     <div class="acts" id="presets"></div>
 
+    <h2>Reading the dancers</h2>
+    <div class="heatbar" aria-hidden="true"></div>
+    <div class="heatlab"><span>Own beat</span><span>Local synchrony</span><span>Moving as one with neighbors</span></div>
+    <p class="note">Body color shows how in step each dancer is with those nearby, so you can see synchrony gather in clusters and spread through the group. A small dark marker above a head shows a dancer leading their neighbors. The edge of the floor takes the color of the collective state, and the dish above the floor is the phase portrait.</p>
     <div id="stats"></div>
 
     <h2>Phase synchrony over time</h2>
@@ -166,7 +175,8 @@ a{color:#1d7f76}
 
     <details>
       <summary>Description</summary>
-      <p><b>What you see.</b> Each figure is a dancer, drawn as the 17-joint skeleton that pose extraction produces (COCO keypoints: nose, eyes, ears, shoulders, elbows, wrists, hips, knees and ankles). Its color is its phase, its place in its own movement cycle, and its limbs move through a simple dance on that cycle: a dip on the beat, alternating steps and swinging arms, each dancer in a style of their own. When colors match, dancers are in step. Teal threads join pairs whose learned coupling is strong. The ring around the floor carries a marker at the group’s mean phase, large and solid when the group is synchronized and small and faint when it is not.</p>
+      <p><b>What you see.</b> Each figure is a dancer, drawn as the 17-joint skeleton that pose extraction produces (COCO keypoints: nose, eyes, ears, shoulders, elbows, wrists, hips, knees and ankles). Its limbs move through a simple dance on its own movement cycle: a dip on the beat, alternating steps and swinging arms, each dancer in a style of their own. Its color is a heat map of its local synchrony: how closely its phase matches the dancers nearby, weighted by distance. Pale slate means it keeps its own beat; amber to deep red means it moves as one with its neighbors. A small dark marker above the head marks a leader: a dancer slightly ahead of synchronized neighbors, who keep catching up to it. When colors match, dancers are in step. Teal threads join pairs whose learned coupling is strong. The edge of the floor takes the color of the collective state: apart, clusters, together or a phase wave.</p>
+      <p><b>The phase portrait.</b> The dish above the floor is the group’s phase space. The ball is the order parameter: its distance from the center is the phase synchrony R (center apart, rim together), and its angle is the group’s mean phase relative to the shared tempo, so a steady group sits still and a drifting one circles. The dish’s height is the landscape from the last minute: troughs are wells the group keeps returning to, ridges are the barriers between them. The trail shows the last few seconds of the trajectory.</p>
       <p><b>The engine.</b> Movement follows the swarmalator model: dancers are drawn toward one another, more so toward those in phase, while keeping personal space; with self-propulsion they also travel in a direction, as directional swarmalators do. Couzin’s zones of repulsion, alignment and attraction are an alternative movement rule. Phases couple as in the Kuramoto model, weighted by proximity, around each dancer’s own natural tempo. With adaptive coupling on, each pair’s coupling strengthens when they move in phase and weakens when they do not, so the group learns its own coordination; a plasticity lag makes that learning non-reciprocal, which can leave the group restlessly switching between states (metastability).</p>
       <p><b>The closed loop.</b> The group’s movement makes the music: each beat sounds, and the group’s pulse grows clearer as it synchronizes. With the loop closed, dancers hear that pulse a moment late and lean toward it. Because the pull of the music grows with the group’s own synchrony, the loop can make two states stable at once, together and apart, which the landscape shows as two wells and the sweep shows as hysteresis.</p>
       <p><b>Reading transitions.</b> A transition is the group crossing from one well to the other. Watch the early-warning panel as the group nears the edge, click the floor to nudge it and see how long it takes to recover, and run the sweep to see whether it tips at different points coming from each direction.</p>
@@ -181,6 +191,7 @@ a{color:#1d7f76}
         <li>Kuramoto phase synchrony and its order parameter (Kuramoto, 1984; Strogatz, 2000) <span class="tag t-pub">published model</span></li>
         <li>Adaptive coupling with a plasticity phase lag (Aoki &amp; Aoyagi, 2009; metastability from non-reciprocal adaptive couplings, 2025) <span class="tag t-pub">published model</span></li>
         <li>Adaptive coupling inside a swarmalator, with a closed loop through generated music whose pull grows with synchrony <span class="tag t-new">novel combination</span></li>
+        <li>Local synchrony (distance-weighted local order parameter) and leadership (mean phase lead over synchronized neighbors) <span class="tag t-pub">standard measures</span>; the four collective states and their thresholds <span class="tag t-ill">illustrative</span></li>
         <li>Early-warning signals of critical transitions (Scheffer et al., 2009); quasi-potential from the distribution of the order parameter <span class="tag t-pub">published method</span></li>
         <li>Dance movement of the skeletons: a simple procedural cycle driven by each dancer’s phase, for display only; it does not yet feed back into the dynamics <span class="tag t-ill">illustrative</span></li>
         <li>All parameter values: tempos around one cycle per second, distances, learning rates, music latency (0.15 s) <span class="tag t-ill">illustrative</span></li>
@@ -322,14 +333,32 @@ function main(){
   const LOG = [];
   function log(msg){ LOG.unshift({ msg, t }); LOG.length = Math.min(LOG.length, 8); $('#log').innerHTML = LOG.map(l => `<li>${l.msg}<small>at ${fmtT(l.t)}</small></li>`).join(''); }
   const fmtT = s => { const m = Math.floor(s / 60), r = Math.floor(s % 60); return `${m}:${String(r).padStart(2, '0')}`; };
+  // each dancer's local synchrony with nearby dancers, and whether they lead or follow them
+  function localMeasures(){
+    const n = A.length; let sum = 0;
+    for (let i = 0; i < n; i++) {
+      const ai = A[i]; let c = 0, s = 0, ld = 0, w = 0;
+      for (let j = 0; j < n; j++) { if (i === j) continue; const aj = A[j], d = Math.hypot(aj.x - ai.x, aj.z - ai.z), wt = Math.exp(-d / .7); const dth = aj.th - ai.th; c += wt * Math.cos(dth); s += wt * Math.sin(dth); ld += wt * Math.sin(-dth); w += wt; }
+      const r = w ? Math.hypot(c, s) / w : 0, lead = w ? ld / w : 0;
+      ai.loc = ai.loc === undefined ? r : ai.loc + (r - ai.loc) * .25;
+      ai.lead = ai.lead === undefined ? lead : ai.lead + (lead - ai.lead) * .15;
+      sum += ai.loc;
+    }
+    M.local = n ? sum / n : 0;
+    const cand = A.map((a, i) => [i, a.lead, a.loc]).filter(x => x[1] > .2 && x[2] > .6).sort((x, y) => y[1] - x[1]).slice(0, 3);
+    A.forEach(a => { a.leader = false; }); for (const [i] of cand) A[i].leader = true;
+  }
+  const STATES = { apart:{ n:'Apart', c:'#7f93b2', d:'Each dancer keeps their own beat' }, clusters:{ n:'Clusters', c:'#8a5fc0', d:'Neighbors move together, but the groups are out of step with each other' }, together:{ n:'Together', c:'#c99000', d:'The whole group moves as one' }, wave:{ n:'Phase wave', c:'#1f8f82', d:'Phase follows position: a rhythm travels across the floor' } };
+  const classify = () => M.S > .6 && M.R < .5 ? 'wave' : M.R > (state === 'together' ? .55 : .7) ? 'together' : M.local > (state === 'clusters' ? .6 : .68) ? 'clusters' : 'apart';
+  const stateTime = { apart:0, clusters:0, together:0, wave:0 };
   function record(){
     REC.t.push(t); REC.R.push(M.R); REC.K.push(M.Kbar); REC.S.push(M.S);
     if (REC.t.length > LEN) for (const k in REC) REC[k].shift();
-    const prev = state;
-    const cand = state !== 'together' && M.R > .7 ? 'together' : state !== 'apart' && M.R < .3 ? 'apart' : null;
-    if (cand) { if (cand !== pend) { pend = cand; pendT = t; } else if (t - pendT >= 2) { state = cand; pend = null; } }
-    else if (pend && (pend === 'together' ? M.R < .55 : M.R > .45)) pend = null;
-    if (state !== prev) { transitions++; log(state === 'together' ? `The group tipped into synchrony after ${fmtT(t - since)} apart.` : `The group fell out of synchrony after ${fmtT(t - since)} together.`); since = t; }
+    localMeasures();
+    const prev = state, cand = classify();
+    stateTime[state] += .1;
+    if (cand !== state) { if (cand !== pend) { pend = cand; pendT = t; } else if (t - pendT >= 2) { state = cand; pend = null; } } else pend = null;
+    if (state !== prev) { transitions++; log(`${STATES[state].n}: ${STATES[state].d.toLowerCase()}. The group had been ${STATES[prev].n.toLowerCase()} for ${fmtT(t - since)}.`); since = t; }
     if (rec && t - rec.t0 > .5) {
       if (M.R >= .9 * rec.R0) { log(`Recovered its synchrony ${(t - rec.t0).toFixed(1)} s after the nudge. Slower recovery means the group is nearer the edge.`); rec = null; }
       else if (t - rec.t0 > 30) { log('Thirty seconds after the nudge the group has not recovered: the disturbance tipped it into the other state.'); rec = null; }
@@ -380,15 +409,15 @@ function main(){
   renderer.setPixelRatio(Math.min(2, devicePixelRatio));
   stage.prepend(renderer.domElement);
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0xf6f5f2, 40, 90);
+  scene.fog = new THREE.Fog(0xf6f5f2, 50, 110);
   const camera = new THREE.PerspectiveCamera(48, 1, .1, 200);
-  camera.position.set(0, 14, 18);
+  camera.position.set(0, 15, 27);
   let zh;
   stage.addEventListener('wheel', ev => { if (ev.ctrlKey || ev.metaKey) return; ev.stopPropagation(); const z = $('#zoomhint'); z.style.opacity = 1; clearTimeout(zh); zh = setTimeout(() => { z.style.opacity = 0; }, 1400); }, { capture:true });
-  if (matchMedia('(pointer: coarse)').matches) $('#hint').textContent = 'Drag to turn, pinch to zoom. Tap the floor to scramble the rhythm of the dancers nearby. Each dancer’s color is their place in their own beat.';
+  if (matchMedia('(pointer: coarse)').matches) $('#hint').textContent = 'Drag to turn, pinch to zoom. Tap the floor to scramble the rhythm of the dancers nearby. Body color shows each dancer’s local synchrony.';
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  Object.assign(controls, { enableDamping:true, enablePan:false, minDistance:8, maxDistance:50, maxPolarAngle:1.45, autoRotate:!reduce, autoRotateSpeed:.25 });
-  controls.target.set(0, .8, 0);
+  Object.assign(controls, { enableDamping:true, enablePan:false, minDistance:10, maxDistance:60, maxPolarAngle:1.45, autoRotate:!reduce, autoRotateSpeed:.25 });
+  controls.target.set(0, 3.6, 0);
   scene.add(new THREE.HemisphereLight(0xffffff, 0xd9d4cc, .95));
   const spot = new THREE.SpotLight(0xfff4e0, 1.3, 60, .7, .6); spot.position.set(0, 22, 4); scene.add(spot);
   const floor = new THREE.Mesh(new THREE.CircleGeometry(RF * SC, 96), new THREE.MeshStandardMaterial({ color:0xefede8, roughness:.9, metalness:0 }));
@@ -396,11 +425,32 @@ function main(){
   for (let k = 1; k <= 4; k++) { const g = new THREE.RingGeometry(RF * SC * k / 4 - .03, RF * SC * k / 4, 128); const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color:0xd6d0c6, transparent:true, opacity:.8 })); m.rotation.x = -Math.PI / 2; m.position.y = .01; scene.add(m); }
   // the mean-phase ring around the floor
   const ringR = RF * SC + 1.2;
-  const pRing = new THREE.Mesh(new THREE.TorusGeometry(ringR, .05, 8, 160), new THREE.MeshBasicMaterial({ color:0xc9c2b7 })); pRing.rotation.x = -Math.PI / 2; pRing.position.y = .05; scene.add(pRing);
+  const stCol = new THREE.Color(), floorBase = new THREE.Color(0xefede8);
+  const pRing = new THREE.Mesh(new THREE.TorusGeometry(ringR, .12, 8, 160), new THREE.MeshBasicMaterial({ color:0xc9c2b7 })); pRing.rotation.x = -Math.PI / 2; pRing.position.y = .05; scene.add(pRing);
   const canvasTex = paint => { const c = document.createElement('canvas'); c.width = c.height = 128; paint(c.getContext('2d')); return new THREE.CanvasTexture(c); };
   const dotTex = canvasTex(g => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.6)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); });
-  const psiDot = new THREE.Mesh(new THREE.SphereGeometry(.45, 20, 14), new THREE.MeshStandardMaterial({ color:0xd99a00, emissive:0xd99a00, emissiveIntensity:.3, transparent:true })); scene.add(psiDot);
-  const centerGlow = new THREE.Mesh(new THREE.CircleGeometry(5, 48), new THREE.MeshBasicMaterial({ map:dotTex, color:0xe2a400, transparent:true, depthWrite:false, opacity:0 })); centerGlow.rotation.x = -Math.PI / 2; scene.add(centerGlow);
+  // phase portrait: the order parameter Z = R e^{i psi} as a point in a dish whose height is the landscape
+  // center = apart (R = 0), rim = together (R = 1); troughs are wells, ridges are barriers
+  const DR = 4.2, NRB = 40, NAN = 72, dish = new THREE.Group(); dish.position.set(0, 10, 0); scene.add(dish);
+  const dg = new THREE.BufferGeometry(), dpos = new Float32Array((NRB + 1) * NAN * 3), dcol = new Float32Array((NRB + 1) * NAN * 3), didx = [];
+  for (let r = 0; r <= NRB; r++) for (let a = 0; a < NAN; a++) { const k = (r * NAN + a) * 3, rr = r / NRB * DR, an = a / NAN * TAU; dpos[k] = rr * Math.cos(an); dpos[k + 2] = rr * Math.sin(an); }
+  for (let r = 0; r < NRB; r++) for (let a = 0; a < NAN; a++) { const p = r * NAN + a, q = r * NAN + (a + 1) % NAN; didx.push(p, p + NAN, q, q, p + NAN, q + NAN); }
+  dg.setAttribute('position', new THREE.BufferAttribute(dpos, 3)); dg.setAttribute('color', new THREE.BufferAttribute(dcol, 3)); dg.setIndex(didx);
+  const dishMesh = new THREE.Mesh(dg, new THREE.MeshStandardMaterial({ vertexColors:true, side:THREE.DoubleSide, roughness:.8, transparent:true, opacity:.9 })); dish.add(dishMesh);
+  const rimLine = new THREE.Mesh(new THREE.TorusGeometry(DR, .03, 6, 96), new THREE.MeshBasicMaterial({ color:0xb9b2a8 })); rimLine.rotation.x = -Math.PI / 2; dish.add(rimLine);
+  const dball = new THREE.Mesh(new THREE.SphereGeometry(.34, 18, 12), new THREE.MeshStandardMaterial({ color:0x24232a, roughness:.4 })); dish.add(dball);
+  const TR = 80, tg = new THREE.BufferGeometry(), tpos = new Float32Array(TR * 3), tcol = new Float32Array(TR * 3); tg.setAttribute('position', new THREE.BufferAttribute(tpos, 3)); tg.setAttribute('color', new THREE.BufferAttribute(tcol, 3));
+  const trail = new THREE.Line(tg, new THREE.LineBasicMaterial({ vertexColors:true })); dish.add(trail);
+  const trailPts = []; let Uprof = new Array(NRB + 1).fill(0), lastTrail = 0;
+  const dishH = R => { const x = Math.max(0, Math.min(1, R)) * NRB, k = Math.min(NRB - 1, Math.floor(x)), f = x - k; return 1.6 * (Uprof[k] * (1 - f) + Uprof[k + 1] * f); };
+  const cLow = new THREE.Color('#5f9e97'), cHigh = new THREE.Color('#efebe4'), cTmp = new THREE.Color();
+  function updateDish(Un){
+    if (Un) { for (let r = 0; r <= NRB; r++) { const b = Math.min(Un.length - 1, Math.floor(r / NRB * Un.length)); Uprof[r] = Un[b]; } }
+    for (let r = 0; r <= NRB; r++) { cTmp.copy(cLow).lerp(cHigh, Math.min(1, Uprof[r] * 1.2)); for (let a = 0; a < NAN; a++) { const k = (r * NAN + a) * 3; dpos[k + 1] = 1.6 * Uprof[r]; dcol[k] = cTmp.r; dcol[k + 1] = cTmp.g; dcol[k + 2] = cTmp.b; } }
+    dg.attributes.position.needsUpdate = dg.attributes.color.needsUpdate = true; dg.computeVertexNormals();
+  }
+  updateDish(null);
+  const dishLab = document.createElement('div'); dishLab.className = 'dlab'; dishLab.innerHTML = '<b>Phase portrait</b>center: apart · rim: together'; stage.append(dishLab);
 
   // dancers
   let figs = [];
@@ -434,6 +484,11 @@ function main(){
     J[13] = knee(hipL, ankL, liftL); J[14] = knee(hipR, ankR, liftR); J[15] = ankL; J[16] = ankR;
     return J;
   }
+  // heat map for local synchrony: pale slate (low) through amber to deep red (high)
+  const HEAT = [[0, new THREE.Color('#c3ccd8')], [.6, new THREE.Color('#8ea6c8')], [.8, new THREE.Color('#f2b04a')], [.93, new THREE.Color('#e2632b')], [1, new THREE.Color('#b31d2c')]];
+  function heat(v, out){ v = Math.max(0, Math.min(1, v)); for (let k = 1; k < HEAT.length; k++) if (v <= HEAT[k][0]) { const [a0, c0] = HEAT[k - 1], [a1, c1] = HEAT[k]; return out.copy(c0).lerp(c1, (v - a0) / (a1 - a0)); } return out.copy(HEAT[HEAT.length - 1][1]); }
+  const crownGeo = new THREE.ConeGeometry(.22, .4, 4); crownGeo.rotateX(Math.PI);
+  const crownMat = new THREE.MeshStandardMaterial({ color:0x24232a, roughness:.5 });
   function buildFigures(){
     for (const f of figs) scene.remove(f.g);
     figs = A.map((a, i) => {
@@ -444,8 +499,9 @@ function main(){
       for (let k = 0; k < 17; k++) { const m = new THREE.Mesh(k === 0 ? headGeo : jointGeo, k === 0 ? mat : jmat); m.userData.i = i; if (k >= 1 && k <= 4) m.scale.setScalar(.6); fig.add(m); joints.push(m); }
       for (let k = 0; k < SKELETON.length; k++) { const m = new THREE.Mesh(boneGeo, mat); m.userData.i = i; fig.add(m); bones.push(m); }
       const sh = new THREE.Mesh(shadowGeo, new THREE.MeshBasicMaterial({ color:0x000000, transparent:true, opacity:.08 })); sh.rotation.x = -Math.PI / 2; sh.position.y = .02;
-      fig.scale.setScalar(1.3); g.add(fig, sh); scene.add(g);
-      return { g, fig, mat, joints, bones, st:styleOf(i), pick:[...joints, ...bones] };
+      const crown = new THREE.Mesh(crownGeo, crownMat); crown.visible = false; crown.userData.i = i;
+      fig.scale.setScalar(1.3); g.add(fig, sh, crown); scene.add(g);
+      return { g, fig, mat, joints, bones, crown, st:styleOf(i), pick:[...joints, ...bones] };
     });
   }
   const _a = new V(), _b = new V(), _d = new V();
@@ -529,7 +585,8 @@ function main(){
     const i = h.object.userData.i, a = A[i], n = A.length; if (!a) return;
     let strong = 0; for (let j = 0; j < n; j++) if (j !== i && Kij[i * n + j] > .6) strong++;
     const rel = wrap(a.th - M.psi);
-    tip.innerHTML = `<b>Dancer ${i + 1}</b><br>Natural tempo ${(60 * omega(a) / TAU).toFixed(0)} cycles a minute. ${Math.abs(rel) < .5 ? 'In step with the group.' : rel > 0 ? 'Ahead of the group by ' + Math.round(rel / TAU * 100) + '% of a cycle.' : 'Behind the group by ' + Math.round(-rel / TAU * 100) + '% of a cycle.'}${P.adaptive ? ` Strongly coupled to ${strong} other${strong === 1 ? '' : 's'}.` : ''}`;
+    const loc = a.loc || 0, L = a.lead || 0;
+    tip.innerHTML = `<b>Dancer ${i + 1}</b><br>Local synchrony ${loc.toFixed(2)}: ${loc > .8 ? 'moving closely with neighbors' : loc > .55 ? 'partly in step with neighbors' : 'mostly on their own beat'}. ${a.leader ? 'Leading nearby dancers: slightly ahead, and they keep catching up.' : L < -.12 && loc > .55 ? 'Following nearby dancers, slightly behind.' : ''} Natural tempo ${(60 * omega(a) / TAU).toFixed(0)} cycles a minute.${P.adaptive ? ` Strongly coupled to ${strong} other${strong === 1 ? '' : 's'}.` : ''}`;
     const r = stage.getBoundingClientRect(); tip.style.display = 'block'; tip.style.left = Math.min(ev.clientX - r.left + 14, Wd - 270) + 'px'; tip.style.top = Math.max(8, ev.clientY - r.top - 10) + 'px';
   });
   renderer.domElement.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
@@ -586,10 +643,14 @@ function main(){
     h += row('Space–phase order S', M.S.toFixed(2), 'High when where a dancer stands predicts their phase, as in a phase wave');
     h += row('Mean learned coupling', P.adaptive ? M.Kbar.toFixed(2) : 'fixed at 1', P.adaptive ? 'Rises as pairs learn to move together; below 0, pairs push each other apart in phase' : 'Turn on adaptive coupling to let it learn');
     h += row('Metastability', meta.toFixed(2), 'Spread of synchrony over the last 30 seconds: high when the group keeps switching');
-    h += row('State', `${state === 'together' ? 'Together' : 'Apart'} for ${fmtT(t - since)}`, `${transitions} transition${transitions === 1 ? '' : 's'} so far. ${trend}`);
+    h += row('Mean local synchrony', (M.local || 0).toFixed(2), 'How in step each dancer is with nearby dancers, averaged: high with low R means clusters');
+    const leaders = A.map((a, i) => [i, a.lead || 0, a.loc || 0]).filter((x, i) => A[i].leader).sort((x, y) => y[1] - x[1]);
+    h += row('Leading now', leaders.length ? leaders.slice(0, 4).map(x => 'dancer ' + (x[0] + 1)).join(', ') : 'no clear leader', 'Dancers slightly ahead of synchronized neighbors, who are catching up: marked by a dark marker above the head');
+    h += row('Collective state', `${STATES[state].n} for ${fmtT(t - since)}`, `${transitions} change${transitions === 1 ? '' : 's'} of state so far. ${trend}`);
+    const tot = Object.values(stateTime).reduce((a, b) => a + b, 0) || 1;
+    h += `<div class="statekey">${Object.entries(STATES).map(([k, v]) => `<div${k === state ? ' class="on"' : ''}><i style="background:${v.c}"></i><span><b>${v.n}</b> ${v.d}</span><em>${Math.round(stateTime[k] / tot * 100)}%</em></div>`).join('')}</div>`;
     $('#stats').innerHTML = h;
-    $('#stateName').textContent = M.R > .7 ? 'Together' : M.R < .3 ? 'Apart' : 'At the edge';
-    $('#stateName').style.color = M.R > .7 ? '#a87500' : M.R < .3 ? '#c8456b' : '#24232a';
+    $('#stateName').textContent = STATES[state].n; $('#stateName').style.color = STATES[state].c;
     $('#stateSub').textContent = `phase synchrony ${M.R.toFixed(2)}`;
   }
   function chartCtx(id){ const c = $(id), r = c.getBoundingClientRect(), d = Math.min(2, devicePixelRatio); if (c.width !== Math.round(r.width * d)) { c.width = Math.round(r.width * d); c.height = Math.round(r.height * d); } const g = c.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0); g.clearRect(0, 0, r.width, r.height); return [g, r.width, r.height]; }
@@ -607,6 +668,7 @@ function main(){
     const sm = new Float32Array(B); for (let i = 0; i < B; i++) { let s = 0, ws = 0; for (let j = -3; j <= 3; j++) { const k = i + j; if (k < 0 || k >= B) continue; const wt = Math.exp(-j * j / 4); s += hist[k] * wt; ws += wt; } sm[i] = s / ws; }
     const tot = sm.reduce((a, b) => a + b, 0) || 1, U = Array.from(sm, v => -Math.log(v / tot + 2e-3));
     const umin = Math.min(...U), umax = Math.max(...U), Un = U.map(u => (u - umin) / (umax - umin || 1));
+    if (REC.R.length > 50) updateDish(Un);
     g.strokeStyle = '#ebe7e0'; g.beginPath(); g.moveTo(30, h - 14); g.lineTo(w - 6, h - 14); g.stroke();
     g.fillStyle = '#7b7682'; g.font = '11px Inter, sans-serif'; g.fillText('apart', 30, h - 2); g.fillText('together', w - 56, h - 2); g.fillText('R', (w + 24) / 2, h - 2);
     if (REC.R.length > 50) {
@@ -635,14 +697,12 @@ function main(){
     beats.length = 0;
     if (run) { acc += dt * P.speed; let k = 0; while (acc >= DT && k++ < 400) { step(); acc -= DT; recClock += DT; if (recClock >= .1) { recClock = 0; record(); } } }
     sound.frame(beats);
-    for (const i of beats) { const a = A[i]; if (a && figs[i]) { col.setHSL(((a.th % TAU) + TAU) % TAU / TAU, .75, .5); if (A.length <= 20 || i % 2 === 0) ripple(a.x * SC, a.z * SC, col.getHex(), 1.4); } }
     const n = A.length;
     figs.forEach((f, i) => {
       const a = A[i]; if (!a) return;
-      const hue = ((a.th % TAU) + TAU) % TAU / TAU;
-      col.setHSL(hue, .75, .48); f.mat.color.copy(col); f.mat.emissive.copy(col);
-      a.beat = Math.max(0, a.beat - dt * 3); a.glow = Math.max(0, a.glow - dt * .8);
-      f.mat.emissiveIntensity = .1 + .35 * a.beat + .4 * a.glow;
+      heat(a.loc || 0, col); f.mat.color.copy(col); f.mat.emissive.copy(col); f.mat.emissiveIntensity = .08;
+      const L = a.lead || 0, leads = !!a.leader;
+      f.crown.visible = leads; if (leads) { f.crown.scale.setScalar(.7 + Math.min(1, (L - .2) / .3) * .6); f.crown.position.y = 2.95 + (reduce ? 0 : .05 * Math.sin(clock.elapsedTime * 2)); }
       f.g.position.set(a.x * SC, 0, a.z * SC);
       poseFigure(f, a);
       const facing = (P.mode === 'couzin' || P.v0 > 0) ? a.ph : (Math.hypot(a.vx, a.vz) > .02 ? Math.atan2(a.vz, a.vx) : Math.atan2(M.cz - a.z, M.cx - a.x));
@@ -659,8 +719,16 @@ function main(){
     }
     lg.setDrawRange(0, m * 2); lp.needsUpdate = lc.needsUpdate = true;
     // mean phase marker and center glow
-    psiDot.position.set(Math.cos(M.psi) * ringR, .4, Math.sin(M.psi) * ringR); psiDot.material.opacity = .2 + .8 * M.R; psiDot.scale.setScalar(.6 + .9 * M.R);
-    centerGlow.position.set(M.cx * SC, .3, M.cz * SC); centerGlow.material.opacity = Math.max(0, (M.R - .3) / .7) * .3;
+    // phase portrait ball: angle is the group's mean phase relative to the shared tempo, so a steady group sits still
+    const ang = M.psi - TAU * P.f0 * t, bx = M.R * DR * Math.cos(ang), bz = M.R * DR * Math.sin(ang);
+    tmp.copy(camera.position).sub(dish.position).normalize().multiplyScalar(.75).add(new V(0, .45, 0)).normalize(); dish.quaternion.setFromUnitVectors(UP, tmp);
+    dball.position.set(bx, dishH(M.R) + .3, bz);
+    if (clock.elapsedTime - lastTrail > .08) { lastTrail = clock.elapsedTime; trailPts.push([bx, dishH(M.R) + .08, bz]); if (trailPts.length > TR) trailPts.shift(); }
+    trailPts.forEach((p, k) => { tpos.set(p, k * 3); const f = k / trailPts.length; tcol[k * 3] = 1 - .86 * f; tcol[k * 3 + 1] = 1 - .86 * f; tcol[k * 3 + 2] = 1 - .84 * f; });
+    tg.setDrawRange(0, trailPts.length); tg.attributes.position.needsUpdate = tg.attributes.color.needsUpdate = true;
+    tmp.set(0, -1, 0).applyQuaternion(camera.quaternion).multiplyScalar(DR + .9).add(dish.position).project(camera); dishLab.style.transform = `translate(${(tmp.x + 1) / 2 * Wd}px,${(1 - tmp.y) / 2 * Hd}px) translate(-50%,0)`; dishLab.style.display = tmp.z < 1 ? 'block' : 'none';
+    // the floor's edge takes the color of the collective state
+    stCol.set(STATES[state].c); pRing.material.color.lerp(stCol, Math.min(1, dt * 2)); floor.material.color.copy(floorBase).lerp(pRing.material.color, .1);
     for (let i = ripples.length - 1; i >= 0; i--) { const r = ripples[i]; r.t += dt / .9; r.m.scale.setScalar(.3 + r.size * r.t); r.m.material.opacity = .6 * (1 - r.t); if (r.t >= 1) { scene.remove(r.m); r.m.material.dispose(); ripples.splice(i, 1); } }
     controls.update(); renderer.render(scene, camera);
     ui += dt; if (ui > .25) { ui = 0; renderStats(); drawCharts(); }
