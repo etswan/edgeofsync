@@ -122,7 +122,7 @@ a{color:#1d7f76}
       <button id="sound" aria-pressed="false">Sound off</button>
       <label for="vol"><span>Volume</span><input id="vol" type="range" min="0" max="1" step=".05" value=".6"></label>
     </div>
-    <p class="note">Each dancer sounds a soft note on their own beat. The group’s pulse and a sustained chord grow clearer as the group synchronizes; with the loop closed, the dancers hear that pulse and lean toward it.</p>
+    <p class="note">The group writes the music as it dances. Apart, each dancer sounds their own note, out of tune with the rest. As synchrony builds, a song forms around the shared beat: a pulse, then bass and moving chords, then a melody that settles into a repeating hook. The song lingers for a few seconds when synchrony drops, and with the loop closed the dancers hear it and lean toward its beat.</p>
 
     <h2>Start from a scenario</h2>
     <div class="acts" id="presets"></div>
@@ -130,7 +130,7 @@ a{color:#1d7f76}
     <h2>Reading the dancers</h2>
     <div class="heatbar" aria-hidden="true"></div>
     <div class="heatlab"><span>Own beat</span><span>Local synchrony</span><span>Moving as one with neighbors</span></div>
-    <p class="note">Body color shows how in step each dancer is with those nearby, so you can see synchrony gather in clusters and spread through the group. A small dark marker above a head shows a dancer leading their neighbors. The edge of the floor takes the color of the collective state, and the dish above the floor is the phase portrait.</p>
+    <p class="note">Body color shows how in step each dancer is with those nearby, so you can see synchrony gather in clusters and spread through the group. A small dark marker above a head shows a dancer leading their neighbors. The ring around the floor glows with the same colors: each part of it shows the synchrony of the dancers nearest to it, and the whole ring warms when the group moves as one. The dish above the floor is the phase portrait.</p>
     <div id="stats"></div>
 
     <h2>Phase synchrony over time</h2>
@@ -167,6 +167,7 @@ a{color:#1d7f76}
       <label for="kB"><span>Plasticity lag β (non-reciprocal learning): <b id="vB"></b></span><input id="kB" type="range" min="0" max="1.6" step=".05"></label>
       <label class="check"><input type="checkbox" id="kL"> Closed loop: dancers hear the group’s music</label>
       <label for="kF"><span>Strength of the music’s pull: <b id="vF"></b></span><input id="kF" type="range" min="0" max="3" step=".05"></label>
+      <label for="kM"><span>Song memory: <b id="vM"></b></span><input id="kM" type="range" min=".5" max="20" step=".5"></label>
       <button id="restart">Restart with new dancers</button>
     </div>
 
@@ -175,10 +176,10 @@ a{color:#1d7f76}
 
     <details>
       <summary>Description</summary>
-      <p><b>What you see.</b> Each figure is a dancer, drawn as the 17-joint skeleton that pose extraction produces (COCO keypoints: nose, eyes, ears, shoulders, elbows, wrists, hips, knees and ankles). Its limbs move through a simple dance on its own movement cycle: a dip on the beat, alternating steps and swinging arms, each dancer in a style of their own. Its color is a heat map of its local synchrony: how closely its phase matches the dancers nearby, weighted by distance. Pale slate means it keeps its own beat; amber to deep red means it moves as one with its neighbors. A small dark marker above the head marks a leader: a dancer slightly ahead of synchronized neighbors, who keep catching up to it. When colors match, dancers are in step. Teal threads join pairs whose learned coupling is strong. The edge of the floor takes the color of the collective state: apart, clusters, together or a phase wave.</p>
+      <p><b>What you see.</b> Each figure is a dancer, drawn as the 17-joint skeleton that pose extraction produces (COCO keypoints: nose, eyes, ears, shoulders, elbows, wrists, hips, knees and ankles). Its limbs move through a simple dance on its own movement cycle: a dip on the beat, alternating steps and swinging arms, each dancer in a style of their own. Its color is a heat map of its local synchrony: how closely its phase matches the dancers nearby, weighted by distance. Pale slate means it keeps its own beat; amber to deep red means it moves as one with its neighbors. A small dark marker above the head marks a leader: a dancer slightly ahead of synchronized neighbors, who keep catching up to it. When colors match, dancers are in step. Teal threads join pairs whose learned coupling is strong. The ring around the floor glows with the same heat colors: each part of it shows the synchrony of the dancers nearest to it, and the whole ring warms when the group moves as one. The floor itself takes a faint tint of the collective state: apart, clusters, together or a phase wave.</p>
       <p><b>The phase portrait.</b> The dish above the floor is the group’s phase space. The ball is the order parameter: its distance from the center is the phase synchrony R (center apart, rim together), and its angle is the group’s mean phase relative to the shared tempo, so a steady group sits still and a drifting one circles. The dish’s height is the landscape from the last minute: troughs are wells the group keeps returning to, ridges are the barriers between them. The trail shows the last few seconds of the trajectory.</p>
       <p><b>The engine.</b> Movement follows the swarmalator model: dancers are drawn toward one another, more so toward those in phase, while keeping personal space; with self-propulsion they also travel in a direction, as directional swarmalators do. Couzin’s zones of repulsion, alignment and attraction are an alternative movement rule. Phases couple as in the Kuramoto model, weighted by proximity, around each dancer’s own natural tempo. With adaptive coupling on, each pair’s coupling strengthens when they move in phase and weakens when they do not, so the group learns its own coordination; a plasticity lag makes that learning non-reciprocal, which can leave the group restlessly switching between states (metastability).</p>
-      <p><b>The closed loop.</b> The group’s movement makes the music: each beat sounds, and the group’s pulse grows clearer as it synchronizes. With the loop closed, dancers hear that pulse a moment late and lean toward it. Because the pull of the music grows with the group’s own synchrony, the loop can make two states stable at once, together and apart, which the landscape shows as two wells and the sweep shows as hysteresis.</p>
+      <p><b>The closed loop.</b> The group’s movement writes the music. A song oscillator follows the group’s mean phase, the way a band follows its dancers, and its strength builds as synchrony rises and lingers for a few seconds after it falls: the song’s memory. That strength decides what is heard, from scattered individual notes when the group is apart to a pulse, bass, moving chords and a melody that settles into a hook. With the loop closed, dancers hear the song a moment late and lean toward its beat, with a pull proportional to its strength. Because the song grows from synchrony and in turn sustains it, the loop can make two states stable at once, together and apart, which the landscape shows as two wells and the sweep shows as hysteresis. A longer song memory holds the group together through brief lapses.</p>
       <p><b>Reading transitions.</b> A transition is the group crossing from one well to the other. Watch the early-warning panel as the group nears the edge, click the floor to nudge it and see how long it takes to recover, and run the sweep to see whether it tips at different points coming from each direction.</p>
     </details>
 
@@ -190,11 +191,12 @@ a{color:#1d7f76}
         <li>Zones of repulsion, alignment and attraction (Couzin et al., 2002) <span class="tag t-pub">published model</span></li>
         <li>Kuramoto phase synchrony and its order parameter (Kuramoto, 1984; Strogatz, 2000) <span class="tag t-pub">published model</span></li>
         <li>Adaptive coupling with a plasticity phase lag (Aoki &amp; Aoyagi, 2009; metastability from non-reciprocal adaptive couplings, 2025) <span class="tag t-pub">published model</span></li>
-        <li>Adaptive coupling inside a swarmalator, with a closed loop through generated music whose pull grows with synchrony <span class="tag t-new">novel combination</span></li>
+        <li>Adaptive coupling inside a swarmalator, with a closed loop through a song oscillator that entrains to the group and whose strength grows with synchrony and lingers <span class="tag t-new">novel combination</span></li>
+        <li>The song’s harmony, rhythm and melody: a generative composition for listening; only its beat and strength act on the dancers <span class="tag t-ill">illustrative</span></li>
         <li>Local synchrony (distance-weighted local order parameter) and leadership (mean phase lead over synchronized neighbors) <span class="tag t-pub">standard measures</span>; the four collective states and their thresholds <span class="tag t-ill">illustrative</span></li>
         <li>Early-warning signals of critical transitions (Scheffer et al., 2009); quasi-potential from the distribution of the order parameter <span class="tag t-pub">published method</span></li>
         <li>Dance movement of the skeletons: a simple procedural cycle driven by each dancer’s phase, for display only; it does not yet feed back into the dynamics <span class="tag t-ill">illustrative</span></li>
-        <li>All parameter values: tempos around one cycle per second, distances, learning rates, music latency (0.15 s) <span class="tag t-ill">illustrative</span></li>
+        <li>All parameter values: tempos around one cycle per second, distances, learning rates, music latency (0.15 s), song memory (6 s) <span class="tag t-ill">illustrative</span></li>
       </ul>
       <h2 style="margin-top:16px">References</h2>
       <ul class="refs">
@@ -235,7 +237,7 @@ function main(){
   const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 
   /* ---------- parameters ---------- */
-  const P = { k0:.3, N:16, K:.9, sigma:.25, J:.5, v0:0, noise:.08, mode:'swarm', adaptive:false, eps:.15, beta:0, loop:true, F:1.0, tau:.15, f0:1.0, speed:1 };
+  const P = { k0:.3, N:16, K:.9, sigma:.25, J:.5, v0:0, noise:.08, mode:'swarm', adaptive:false, eps:.15, beta:0, loop:true, F:1.1, tau:.15, f0:1.0, Km:2, mem:6, rise:1, speed:1 };
   const RF = 2.2, SC = 5.2;            // floor radius (model units) and world scale
   const DT = .02;
 
@@ -272,16 +274,21 @@ function main(){
     let kb = 0, m = 0; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (i !== j) { kb += Kij[i * n + j]; m++; } M.Kbar = m ? kb / m : 0;
   }
   // delayed mean field: what the dancers hear, a moment late
-  const HIST = 64, hR = new Float32Array(HIST), hPsi = new Float32Array(HIST); let hI = 0;
+  const HIST = 64, hS = new Float32Array(HIST), hG = new Float32Array(HIST); let hI = 0;
+  // the song: an oscillator that entrains to the group's mean phase, with a strength that builds and lingers
+  const SONG = { ph:0, G:0, q:0, ev:[] };
 
   /* ---------- one step of the model ---------- */
   const beats = [];
   function step(){
     const n = A.length, Kn = P.K / n;
     measure();
-    hR[hI % HIST] = M.R; hPsi[hI % HIST] = M.psi; hI++;
+    SONG.ph += DT * (TAU * P.f0 + P.Km * M.R * Math.sin(M.psi - SONG.ph));
+    const cl = clarity(M.R); SONG.G += DT * (cl - SONG.G) / (cl > SONG.G ? P.rise : Math.max(.2, P.mem));
+    const q = Math.floor(SONG.ph / (TAU / 4)); while (SONG.q < q) { SONG.q++; SONG.ev.push(SONG.q); } if (SONG.ev.length > 64) SONG.ev.splice(0, SONG.ev.length - 64);
+    hS[hI % HIST] = SONG.ph; hG[hI % HIST] = SONG.G; hI++;
     const lag = Math.min(HIST - 1, Math.round(P.tau / DT)), di = (hI - 1 - lag + HIST * 4) % HIST;
-    const Rd = hR[di], Pd = hPsi[di] + TAU * P.f0 * P.tau;   // the beat heard now was played tau ago
+    const Gd = hG[di], Pd = hS[di] + TAU * P.f0 * P.tau;   // the song heard now was played tau ago
     const dth = new Float32Array(n), vx = new Float32Array(n), vz = new Float32Array(n), dph = new Float32Array(n);
     for (let i = 0; i < n; i++) {
       const ai = A[i]; let sx = 0, sz = 0, sp = 0, alx = 0, alz = 0, atx = 0, atz = 0, rpx = 0, rpz = 0, nr = 0, al = 0;
@@ -300,7 +307,7 @@ function main(){
         }
         if (P.adaptive) { const k = i * n + j; Kij[k] += P.eps * DT * (Math.cos(dthij + P.beta) - Kij[k]); }
       }
-      dth[i] = omega(ai) + Kn * sp + (P.loop ? P.F * clarity(Rd) * Math.sin(Pd - ai.th) : 0);
+      dth[i] = omega(ai) + Kn * sp + (P.loop ? P.F * Gd * Math.sin(Pd - ai.th) : 0);
       if (P.mode === 'swarm') {
         vx[i] = sx / n + P.v0 * Math.cos(ai.ph); vz[i] = sz / n + P.v0 * Math.sin(ai.ph);
         dph[i] = al ? 1.5 * alx / al : 0;
@@ -423,10 +430,14 @@ function main(){
   const floor = new THREE.Mesh(new THREE.CircleGeometry(RF * SC, 96), new THREE.MeshStandardMaterial({ color:0xefede8, roughness:.9, metalness:0 }));
   floor.rotation.x = -Math.PI / 2; scene.add(floor);
   for (let k = 1; k <= 4; k++) { const g = new THREE.RingGeometry(RF * SC * k / 4 - .03, RF * SC * k / 4, 128); const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color:0xd6d0c6, transparent:true, opacity:.8 })); m.rotation.x = -Math.PI / 2; m.position.y = .01; scene.add(m); }
-  // the mean-phase ring around the floor
-  const ringR = RF * SC + 1.2;
-  const stCol = new THREE.Color(), floorBase = new THREE.Color(0xefede8);
-  const pRing = new THREE.Mesh(new THREE.TorusGeometry(ringR, .12, 8, 160), new THREE.MeshBasicMaterial({ color:0xc9c2b7 })); pRing.rotation.x = -Math.PI / 2; pRing.position.y = .05; scene.add(pRing);
+  // the ring around the floor: each arc glows with the synchrony of the dancers nearest it
+  const ringR = RF * SC + 1.2, NSEG = 96;
+  const stCol = new THREE.Color(), floorBase = new THREE.Color(0xefede8), segCol = new THREE.Color();
+  const rgeo = new THREE.TorusGeometry(ringR, .17, 8, 192), rpos = rgeo.attributes.position, rseg = new Uint8Array(rpos.count);
+  for (let k = 0; k < rpos.count; k++) { const an = Math.atan2(-rpos.getY(k), rpos.getX(k)); rseg[k] = Math.floor(((an + TAU) % TAU) / TAU * NSEG) % NSEG; }
+  rgeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(rpos.count * 3), 3));
+  const segV = new Float32Array(NSEG), segRGB = new Float32Array(NSEG * 3);
+  const pRing = new THREE.Mesh(rgeo, new THREE.MeshBasicMaterial({ vertexColors:true })); pRing.rotation.x = -Math.PI / 2; pRing.position.y = .05; scene.add(pRing);
   const canvasTex = paint => { const c = document.createElement('canvas'); c.width = c.height = 128; paint(c.getContext('2d')); return new THREE.CanvasTexture(c); };
   const dotTex = canvasTex(g => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(.35, 'rgba(255,255,255,.6)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 128, 128); });
   // phase portrait: the order parameter Z = R e^{i psi} as a point in a dish whose height is the landscape
@@ -523,50 +534,86 @@ function main(){
   function ripple(x, z, color, size){ if (reduce || ripples.length > 60) return; const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.7, depthWrite:false })); m.rotation.x = -Math.PI / 2; m.position.set(x, .03, z); scene.add(m); ripples.push({ m, t:0, size }); }
 
   /* ---------- sound ---------- */
+  // the music is written on the spot by the song oscillator: as synchrony builds, its strength G brings in
+  // pulse, bass, harmony that moves, and a melody that settles into a repeating hook
   const sound = (() => {
-    let ctx = null, master, padBus, pads = [], playing = false, vol = .6, lastPsi = 0;
+    let ctx = null, master, rv, padBus, noise, pads = [], playing = false, vol = .6;
+    const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+    const CHORDS = [ { b:38, v:[57, 60, 62, 65] }, { b:34, v:[57, 58, 62, 65] }, { b:41, v:[57, 60, 64, 65] }, { b:36, v:[55, 60, 62, 64] } ];
+    const SCALE = [0, 2, 3, 5, 7, 9, 10];
+    const RHY = [[0, 3, 6, 8, 10, 12], [0, 2, 4, 7, 8, 12, 14], [0, 3, 4, 8, 11, 12], [0, 4, 6, 8, 12, 13, 14], [0, 2, 3, 6, 8, 10, 14]];
+    let chord = 0, rhy = RHY[0], degs = [], step = 0;
+    const walk = n => { const d = [0]; for (let k = 1; k < n; k++) d.push(Math.max(-3, Math.min(9, d[k - 1] + [-2, -1, -1, 1, 1, 2, 0][Math.floor(Math.random() * 7)]))); return d; };
+    function newMotif(){ rhy = RHY[Math.floor(Math.random() * RHY.length)]; degs = walk(rhy.length); }
+    newMotif();
+    const toMidi = d => 62 + 12 * Math.floor(d / 7) + SCALE[((d % 7) + 7) % 7];
+    const snap = (m, tones) => { let best = m, bd = 99; for (const t of tones) for (let o = -24; o <= 24; o += 12) { const c = t + o, dd = Math.abs(c - m); if (dd < bd) { bd = dd; best = c; } } return best; };
     function init(){
       ctx = new (window.AudioContext || window.webkitAudioContext)();
       master = ctx.createGain(); master.gain.value = 0;
-      const comp = ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
-      const len = ctx.sampleRate * 2.6, buf = ctx.createBuffer(2, len, ctx.sampleRate);
+      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 4; master.connect(comp); comp.connect(ctx.destination);
+      const len = ctx.sampleRate * 2.4, buf = ctx.createBuffer(2, len, ctx.sampleRate);
       for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
-      const rv = ctx.createConvolver(); rv.buffer = buf; const wet = ctx.createGain(); wet.gain.value = .35; rv.connect(wet); wet.connect(master); master.rv = rv;
-      padBus = ctx.createGain(); padBus.gain.value = 0; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500; padBus.connect(lp); lp.connect(master); lp.connect(rv); padBus.lp = lp;
-      [73.42, 110, 146.83, 155.56].forEach((f, k) => { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; const g = ctx.createGain(); g.gain.value = 0; o.connect(g); g.connect(padBus); o.start(); pads.push({ o, g, f, k }); });
+      rv = ctx.createConvolver(); rv.buffer = buf; const wet = ctx.createGain(); wet.gain.value = .3; rv.connect(wet); wet.connect(master);
+      noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); const nd = noise.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      padBus = ctx.createGain(); padBus.gain.value = 0; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 400; lp.Q.value = .7; padBus.connect(lp); lp.connect(master); lp.connect(rv); padBus.lp = lp;
+      for (let k = 0; k < 5; k++) { const o = ctx.createOscillator(); o.type = k % 2 ? 'triangle' : 'sawtooth'; o.frequency.value = mtof(k < 4 ? CHORDS[0].v[k] : 51); const g = ctx.createGain(); g.gain.value = 0; o.connect(g); g.connect(padBus); o.start(); pads.push({ o, g, k }); }
       document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else if (playing) ctx.resume(); });
     }
-    function note(freq, pan, gain){
-      const t0 = ctx.currentTime + .01, o = ctx.createOscillator(), o2 = ctx.createOscillator(), e = ctx.createGain(), pn = ctx.createStereoPanner();
-      o.type = 'sine'; o.frequency.value = freq; o2.type = 'triangle'; o2.frequency.value = freq * 4.01;
-      const g2 = ctx.createGain(); g2.gain.value = .12; o2.connect(g2); g2.connect(e);
-      e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(gain, t0 + .004); e.gain.exponentialRampToValueAtTime(.0001, t0 + .55);
-      o.connect(e); e.connect(pn); pn.pan.value = pan; pn.connect(master); pn.connect(master.rv);
-      o.start(t0); o2.start(t0); o.stop(t0 + .6); o2.stop(t0 + .6);
+    const T = () => ctx.currentTime + .02;
+    function env(node, t0, a, peak, dec){ node.gain.setValueAtTime(0, t0); node.gain.linearRampToValueAtTime(peak, t0 + a); node.gain.exponentialRampToValueAtTime(.0001, t0 + dec); }
+    function tone(freq, type, gain, dec, pan, wet, detune){
+      const t0 = T(), o = ctx.createOscillator(), e = ctx.createGain(), pn = ctx.createStereoPanner();
+      o.type = type; o.frequency.value = freq; o.detune.value = detune || 0; env(e, t0, .006, gain, dec);
+      o.connect(e); e.connect(pn); pn.pan.value = pan || 0; pn.connect(master); if (wet) pn.connect(rv); o.start(t0); o.stop(t0 + dec + .05);
     }
-    function drum(gain){
-      const t0 = ctx.currentTime + .01, o = ctx.createOscillator(), e = ctx.createGain();
-      o.frequency.setValueAtTime(110, t0); o.frequency.exponentialRampToValueAtTime(48, t0 + .18);
-      e.gain.setValueAtTime(0, t0); e.gain.linearRampToValueAtTime(gain, t0 + .005); e.gain.exponentialRampToValueAtTime(.0001, t0 + .4);
-      o.connect(e); e.connect(master); o.start(t0); o.stop(t0 + .45);
+    function kick(g){ const t0 = T(), o = ctx.createOscillator(), e = ctx.createGain(); o.frequency.setValueAtTime(120, t0); o.frequency.exponentialRampToValueAtTime(45, t0 + .16); env(e, t0, .004, g, .38); o.connect(e); e.connect(master); o.start(t0); o.stop(t0 + .42); }
+    function hiss(g, hp, dec, bp){
+      const t0 = T(), s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), e = ctx.createGain();
+      s.buffer = noise; f.type = bp ? 'bandpass' : 'highpass'; f.frequency.value = hp; env(e, t0, .002, g, dec);
+      s.connect(f); f.connect(e); e.connect(master); if (bp) e.connect(rv); s.start(t0, Math.random() * .5); s.stop(t0 + dec + .05);
+    }
+    function bass(m, g){ const t0 = T(), o = ctx.createOscillator(), f = ctx.createBiquadFilter(), e = ctx.createGain(); o.type = 'sawtooth'; o.frequency.value = mtof(m); f.type = 'lowpass'; f.frequency.value = 380; env(e, t0, .01, g, .5); o.connect(f); f.connect(e); e.connect(master); o.start(t0); o.stop(t0 + .55); }
+    function onSixteenth(q, G){
+      const s = ((q % 16) + 16) % 16, C = CHORDS[chord];
+      if (s === 0) {
+        if (G > .4) chord = (chord + 1) % CHORDS.length;
+        if (Math.random() < .08 + .5 * (1 - G)) { if (G < .3 || Math.random() < .3) newMotif(); else degs[Math.floor(Math.random() * degs.length)] += Math.random() < .5 ? -1 : 1; }
+        step = 0;
+      }
+      const C2 = CHORDS[chord];
+      if (G > .22 && (s === 0 || s === 8)) kick(.55 * Math.min(1, (G - .22) / .5));
+      if (G > .8 && (s === 4 || s === 12)) kick(.25);
+      if (G > .38 && (s === 0 || s === 10 || (G > .7 && s === 7))) bass(C2.b + (s === 7 ? 7 : 0), .22 * Math.min(1, (G - .38) / .4));
+      if (G > .5 && s % 4 === 2) hiss(.07 * (G - .4), 7000, .05);
+      if (G > .85 && s % 2 === 1) hiss(.025, 9000, .03);
+      if (G > .68 && (s === 4 || s === 12)) { hiss(.12 * (G - .5), 1800, .16, true); tone(196, 'triangle', .05 * (G - .5), .08); }
+      if (G > .62) { const v = C2.v, i = s % 8 < 4 ? s % 4 : 3 - (s % 4); tone(mtof(v[i] + 12), 'sine', .05 * Math.min(1, (G - .62) / .3), .22, (s % 4 - 1.5) / 2.5, true); }
+      if (G > .45) {
+        const k = rhy.indexOf(s);
+        if (k >= 0) { let m = toMidi(degs[k]); if (s % 4 === 0) m = snap(m, C2.v); tone(mtof(m), 'triangle', .085 * Math.min(1, (G - .4) / .4), .42, 0, true, (1 - G) * 12); }
+      }
     }
     return {
       toggle(){ if (!ctx) init(); playing = !playing; if (playing) { ctx.resume(); master.gain.setTargetAtTime(vol * .8, ctx.currentTime, .3); } else master.gain.setTargetAtTime(0, ctx.currentTime, .2); return playing; },
       volume(v){ vol = v; if (ctx && playing) master.gain.setTargetAtTime(vol * .8, ctx.currentTime, .2); },
       frame(beatsNow){
+        const ev = SONG.ev.splice(0);
         if (!ctx || !playing) return;
-        const n = A.length, g = .16 / Math.sqrt(n);
-        for (const i of beatsNow.slice(0, 12)) { const a = A[i]; note(a.pitch, Math.max(-.9, Math.min(.9, a.x / RF)), g); }
-        // the group's pulse: clearer as the group synchronizes
-        if (wrap(M.psi - lastPsi) < 0 && Math.cos(M.psi) > .95 && M.R > .35) { drum(.35 * (M.R - .3) / .7); lastPsi = M.psi + .5; } else if (Math.cos(M.psi) < .5) lastPsi = M.psi;
-        // the sustained chord: consonant when together, clouded when apart
+        const G = SONG.G, n = A.length, C = CHORDS[chord];
+        for (const q of ev.slice(-4)) onSixteenth(q, G);
+        // each dancer's own note: loud and out of tune when apart, absorbed into the song's harmony as it forms
+        for (const i of beatsNow.slice(0, 12)) {
+          const a = A[i]; if (Math.random() > 1.15 - G) continue;
+          const lead = a.leader && G > .45, m = G > .5 ? snap(12 * Math.log2(a.pitch / 440) + 69, C.v) + (lead ? 12 : 0) : 12 * Math.log2(a.pitch / 440) + 69;
+          tone(mtof(m), 'sine', (lead ? .1 : .14 / Math.sqrt(n)) * (1 - .5 * G), .5, Math.max(-.9, Math.min(.9, a.x / RF)), true, (1 - G) * (i % 2 ? 30 : -30));
+        }
         const now = ctx.currentTime;
-        padBus.gain.setTargetAtTime(.05 + .07 * M.R, now, .3);
-        padBus.lp.frequency.setTargetAtTime(300 + 1500 * M.R * M.R, now, .3);
+        padBus.gain.setTargetAtTime(.04 + .06 * G, now, .4);
+        padBus.lp.frequency.setTargetAtTime(320 + 1700 * G * G, now, .5);
         for (const p of pads) {
-          const dis = p.k === 3;
-          p.g.gain.setTargetAtTime(dis ? .5 * (1 - M.R) : .35, now, .4);
-          p.o.detune.setTargetAtTime((1 - M.R) * (p.k % 2 ? 18 : -14), now, .4);
+          if (p.k < 4) { p.o.frequency.setTargetAtTime(mtof(C.v[p.k] - 12), now, .25); p.g.gain.setTargetAtTime(.3, now, .4); p.o.detune.setTargetAtTime((1 - G) * (p.k % 2 ? 22 : -18), now, .5); }
+          else { p.o.frequency.setTargetAtTime(mtof(C.v[0] - 11), now, .3); p.g.gain.setTargetAtTime(.45 * Math.max(0, 1 - 1.6 * G), now, .5); }
         }
       }
     };
@@ -600,9 +647,9 @@ function main(){
   });
 
   /* ---------- controls ---------- */
-  const fmtN = { N:v => v, K:v => (+v).toFixed(2), sigma:v => `±${Math.round(v * 60)} cycles a minute`, J:v => (+v).toFixed(2), v0:v => (+v).toFixed(2), noise:v => (+v).toFixed(2), eps:v => (+v).toFixed(2), beta:v => (+v).toFixed(2), F:v => (+v).toFixed(2) };
-  const MAP = { kN:'N', kK:'K', kS:'sigma', kJ:'J', kV:'v0', kD:'noise', kE:'eps', kB:'beta', kF:'F' };
-  const OUT = { N:'vN', K:'vK', sigma:'vS', J:'vJ', v0:'vV', noise:'vD', eps:'vE', beta:'vB', F:'vF' };
+  const fmtN = { N:v => v, K:v => (+v).toFixed(2), sigma:v => `±${Math.round(v * 60)} cycles a minute`, J:v => (+v).toFixed(2), v0:v => (+v).toFixed(2), noise:v => (+v).toFixed(2), eps:v => (+v).toFixed(2), beta:v => (+v).toFixed(2), F:v => (+v).toFixed(2), mem:v => `${(+v).toFixed(1)} s` };
+  const MAP = { kN:'N', kK:'K', kS:'sigma', kJ:'J', kV:'v0', kD:'noise', kE:'eps', kB:'beta', kF:'F', kM:'mem' };
+  const OUT = { N:'vN', K:'vK', sigma:'vS', J:'vJ', v0:'vV', noise:'vD', eps:'vE', beta:'vB', F:'vF', mem:'vM' };
   function syncControls(){
     for (const id in MAP) { const k = MAP[id]; $('#' + id).value = P[k]; $('#' + OUT[k]).textContent = fmtN[k](P[k]); }
     $('#kA').checked = P.adaptive; $('#kL').checked = P.loop; $('#kE').disabled = $('#kB').disabled = !P.adaptive; $('#kF').disabled = !P.loop; $('#kK').disabled = !!SW;
@@ -610,7 +657,7 @@ function main(){
   }
   for (const id in MAP) $('#' + id).oninput = e => { const k = MAP[id]; P[k] = +e.target.value; if (k === 'N') resize(P.N); syncControls(); };
   $('#kA').onchange = e => { P.adaptive = e.target.checked; resetCoupling(); syncControls(); log(P.adaptive ? 'Adaptive coupling on: pairs who move in phase now bind more tightly.' : 'Adaptive coupling off: every pair is coupled equally again.'); };
-  $('#kL').onchange = e => { P.loop = e.target.checked; syncControls(); log(P.loop ? 'Loop closed: the dancers hear the group’s pulse and lean toward it.' : 'Loop opened: the music is still played, but the dancers no longer respond to it.'); };
+  $('#kL').onchange = e => { P.loop = e.target.checked; syncControls(); log(P.loop ? 'Loop closed: the dancers hear the group’s song and lean toward its beat.' : 'Loop opened: the music is still played, but the dancers no longer respond to it.'); };
   $('#mode').onclick = e => { const b = e.target.closest('button'); if (!b) return; P.mode = b.dataset.v; syncControls(); log(P.mode === 'couzin' ? 'Movement now follows Couzin’s zones: keep apart when too close, align with neighbors, move toward those further away.' : 'Movement now follows the swarmalator rule: drawn together, more so toward those in phase.'); };
   $('#restart').onclick = () => { spawn(P.N); buildFigures(); log('New dancers take the floor.'); };
   const SPEEDS = [.5, 1, 2, 4], SPL = ['Half speed', 'Real time', 'Twice as fast', 'Four times as fast'];
@@ -621,7 +668,7 @@ function main(){
 
   const PRESETS = [
     { n:'Drifting apart', s:'Weak coupling, varied tempos', p:{ K:.3, sigma:.2, J:.3, v0:0, noise:.05, mode:'swarm', adaptive:false, loop:false } },
-    { n:'At the edge', s:'Poised between two states', p:{ K:.9, sigma:.25, J:.5, v0:0, noise:.08, mode:'swarm', adaptive:false, loop:true, F:1 } },
+    { n:'At the edge', s:'Poised between two states', p:{ K:.9, sigma:.25, J:.5, v0:0, noise:.08, mode:'swarm', adaptive:false, loop:true, F:1.1, mem:6 } },
     { n:'Locked together', s:'Strong coupling and music', p:{ K:2, sigma:.1, J:.6, v0:0, noise:.04, mode:'swarm', adaptive:false, loop:true, F:1.5 } },
     { n:'Learning to sync', s:'Coupling learns from moving together', p:{ K:1.4, sigma:.15, J:.5, v0:0, noise:.06, mode:'swarm', adaptive:true, eps:.12, beta:0, loop:true, F:.8 } },
     { n:'Restless', s:'Non-reciprocal learning, metastable', p:{ K:2, sigma:.1, J:.4, v0:0, noise:.06, mode:'swarm', adaptive:true, eps:.15, beta:.6, loop:false } },
@@ -629,7 +676,7 @@ function main(){
     { n:'Traveling together', s:'Directional swarmalators', p:{ K:1.2, sigma:.08, J:.6, v0:.3, noise:.05, mode:'swarm', adaptive:false, loop:true, F:1 } },
     { n:'Flock', s:'Couzin zones with phase coupling', p:{ K:1.2, sigma:.1, J:.5, v0:.1, noise:.05, mode:'couzin', adaptive:false, loop:true, F:1 } } ];
   $('#presets').innerHTML = PRESETS.map((q, i) => `<button data-i="${i}">${q.n}<small>${q.s}</small></button>`).join('');
-  $('#presets').onclick = e => { const b = e.target.closest('button'); if (!b) return; const q = PRESETS[+b.dataset.i]; Object.assign(P, q.p); resetCoupling(); syncControls(); log(`Scenario: ${q.n.toLowerCase()}. ${q.s}.`); };
+  $('#presets').onclick = e => { const b = e.target.closest('button'); if (!b) return; const q = PRESETS[+b.dataset.i]; Object.assign(P, { mem:6 }, q.p); resetCoupling(); syncControls(); log(`Scenario: ${q.n.toLowerCase()}. ${q.s}.`); };
 
   /* ---------- panel ---------- */
   const row = (k, v, note) => `<div class="row"><span>${k}</span><b>${v}</b>${note ? `<em>${note}</em>` : ''}</div>`;
@@ -728,7 +775,15 @@ function main(){
     tg.setDrawRange(0, trailPts.length); tg.attributes.position.needsUpdate = tg.attributes.color.needsUpdate = true;
     tmp.set(0, -1, 0).applyQuaternion(camera.quaternion).multiplyScalar(DR + .9).add(dish.position).project(camera); dishLab.style.transform = `translate(${(tmp.x + 1) / 2 * Wd}px,${(1 - tmp.y) / 2 * Hd}px) translate(-50%,0)`; dishLab.style.display = tmp.z < 1 ? 'block' : 'none';
     // the floor's edge takes the color of the collective state
-    stCol.set(STATES[state].c); pRing.material.color.lerp(stCol, Math.min(1, dt * 2)); floor.material.color.copy(floorBase).lerp(pRing.material.color, .1);
+    const rr0 = ringR / SC;
+    for (let k = 0; k < NSEG; k++) {
+      const an = (k + .5) / NSEG * TAU, px = rr0 * Math.cos(an), pz = rr0 * Math.sin(an); let w = 0, v = 0;
+      for (const a of A) { const wt = Math.exp(-Math.hypot(a.x - px, a.z - pz) / .8); w += wt; v += wt * (a.loc || 0); }
+      const target = Math.max(w > 1e-6 ? v / w : 0, M.R);
+      segV[k] += (target - segV[k]) * Math.min(1, dt * 3); heat(segV[k], segCol); segRGB[k * 3] = segCol.r; segRGB[k * 3 + 1] = segCol.g; segRGB[k * 3 + 2] = segCol.b;
+    }
+    const rc = rgeo.attributes.color; for (let k = 0; k < rpos.count; k++) { const g = rseg[k] * 3; rc.setXYZ(k, segRGB[g], segRGB[g + 1], segRGB[g + 2]); } rc.needsUpdate = true;
+    stCol.set(STATES[state].c); floor.material.color.lerp(stCol.lerp(floorBase, .9), Math.min(1, dt * 2));
     for (let i = ripples.length - 1; i >= 0; i--) { const r = ripples[i]; r.t += dt / .9; r.m.scale.setScalar(.3 + r.size * r.t); r.m.material.opacity = .6 * (1 - r.t); if (r.t >= 1) { scene.remove(r.m); r.m.material.dispose(); ripples.splice(i, 1); } }
     controls.update(); renderer.render(scene, camera);
     ui += dt; if (ui > .25) { ui = 0; renderStats(); drawCharts(); }
