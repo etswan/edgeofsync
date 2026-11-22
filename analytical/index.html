@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The data-driven model · Edge of Sync</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;600&display=swap">
+<style>
+:root{color-scheme:light;--bg:#f6f5f2;--ink:#24232a;--mute:#625e6a;--accent:#1d7f76;--taupe:#a89a8c}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column}
+.hero{background:var(--taupe);color:#fff;padding:clamp(56px,11vh,128px) clamp(20px,6vw,72px) 32px}
+.hero .in{max-width:760px;margin:0 auto}
+.kind{font-size:13px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 12px;opacity:.9}
+h1{font:600 clamp(40px,6vw,64px)/1.05 Fraunces,Georgia,serif;letter-spacing:-.02em;margin:0 0 20px}
+.hero p{font-size:clamp(17px,1.5vw,19px);line-height:1.65;margin:0 0 16px;max-width:64ch}
+.fade-down{height:clamp(100px,18vh,180px);background:linear-gradient(var(--taupe),var(--bg))}
+.back{text-align:center;padding:0 20px 72px}
+.btn{display:inline-block;background:var(--taupe);color:#fff;text-decoration:none;padding:11px 22px;border-radius:999px;font-weight:600;font-size:15px}
+.btn:hover{background:#978879}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="in">
+    <p class="kind">Analytical</p>
+    <h1>The data-driven model</h1>
+    <p>Video recordings of dancing groups turned into per-dancer movement signals, feeding a pipeline that detects collective states, transitions, coupling and early-warning signals directly from the recordings.</p>
+    <p>This model is in development.</p>
+  </div>
+</header>
+<div class="fade-down" aria-hidden="true"></div>
+<div class="back"><a class="btn" href="../">Back to Edge of Sync</a></div>
+</body>
+</html>
