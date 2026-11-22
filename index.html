@@ -56,6 +56,8 @@ button:disabled{opacity:.5;cursor:default}
 .seg button[aria-pressed=true]{background:#fff;border-color:#b9b2a8}
 .acts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .acts button{font-size:14px;line-height:1.25}
+.groups{grid-template-columns:repeat(3,minmax(0,1fr))}
+.groups button[aria-pressed=true]{background:#e3f1ef;border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .run{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;margin-top:10px}
 .ctl{display:grid;gap:10px}
 .ctl label,.run label{font-size:14px;color:var(--mute);display:grid;gap:2px}
@@ -107,7 +109,7 @@ a{color:#1d7f76}
     <div class="badge" id="badge"><b id="stateName">Apart</b><span id="stateSub">phase synchrony 0.00</span></div>
     <div class="tip" id="tip"></div>
     <div class="zoomhint" id="zoomhint">Hold Ctrl (⌘ on a Mac) and scroll to zoom</div>
-    <p class="hint" id="hint">Drag to turn; pinch, or hold Ctrl (⌘) and scroll, to zoom. Click the floor to scramble the rhythm of the dancers nearby and watch whether the group recovers. Body color shows each dancer’s local synchrony.</p>
+    <p class="hint" id="hint">Drag to turn; pinch, or hold Ctrl (⌘) and scroll, to zoom. Click the floor to release a puff of fog: dancers inside it can barely see each other, though they still hear the music. Body color shows each dancer’s local synchrony.</p>
   </div>
   <aside class="panel">
     <h1>The model</h1>
@@ -122,10 +124,13 @@ a{color:#1d7f76}
       <button id="sound" aria-pressed="false">Sound off</button>
       <label for="vol"><span>Volume</span><input id="vol" type="range" min="0" max="1" step=".05" value=".6"></label>
     </div>
-    <p class="note">The group writes the music as it dances. Apart, each dancer sounds their own note, out of tune with the rest. As synchrony builds, a song forms around the shared beat: a pulse, then bass and moving chords, then a melody that settles into a repeating hook. The song lingers for a few seconds when synchrony drops, and with the loop closed the dancers hear it and lean toward its beat.</p>
+    <p class="note">The group writes the music as it dances. Apart, each dancer sounds their own note, out of tune with the rest. As synchrony builds, a song forms around the shared beat: a pulse, then bass and moving chords, then a melody that settles into a repeating hook. The song lingers for a few seconds when synchrony drops. With the loop closed, every layer pulls the dancers toward the beat, the low percussion most of all.</p>
 
-    <h2>Start from a scenario</h2>
-    <div class="acts" id="presets"></div>
+    <h2>Who is dancing</h2>
+    <div class="acts groups" id="presets"></div>
+    <p class="note" id="groupNote"></p>
+    <h2>Click the floor to</h2>
+    <div class="seg" role="group" aria-label="What a click on the floor does" id="clickMode"><button data-v="fog" aria-pressed="true">Release fog</button><button data-v="scramble" aria-pressed="false">Scramble rhythm</button></div>
 
     <h2>Reading the dancers</h2>
     <div class="heatbar" aria-hidden="true"></div>
@@ -179,8 +184,10 @@ a{color:#1d7f76}
       <p><b>What you see.</b> Each figure is a dancer, drawn as the 17-joint skeleton that pose extraction produces (COCO keypoints: nose, eyes, ears, shoulders, elbows, wrists, hips, knees and ankles). Its limbs move through a simple dance on its own movement cycle: a dip on the beat, alternating steps and swinging arms, each dancer in a style of their own. Its color is a heat map of its local synchrony: how closely its phase matches the dancers nearby, weighted by distance. Pale slate means it keeps its own beat; amber to deep red means it moves as one with its neighbors. A small dark marker above the head marks a leader: a dancer slightly ahead of synchronized neighbors, who keep catching up to it. When colors match, dancers are in step. Teal threads join pairs whose learned coupling is strong. The ring around the floor glows with the same heat colors: each part of it shows the synchrony of the dancers nearest to it, and the whole ring warms when the group moves as one. The floor itself takes a faint tint of the collective state: apart, clusters, together or a phase wave.</p>
       <p><b>The phase portrait.</b> The dish above the floor is the group’s phase space. The ball is the order parameter: its distance from the center is the phase synchrony R (center apart, rim together), and its angle is the group’s mean phase relative to the shared tempo, so a steady group sits still and a drifting one circles. The dish’s height is the landscape from the last minute: troughs are wells the group keeps returning to, ridges are the barriers between them. The trail shows the last few seconds of the trajectory.</p>
       <p><b>The engine.</b> Movement follows the swarmalator model: dancers are drawn toward one another, more so toward those in phase, while keeping personal space; with self-propulsion they also travel in a direction, as directional swarmalators do. Couzin’s zones of repulsion, alignment and attraction are an alternative movement rule. Phases couple as in the Kuramoto model, weighted by proximity, around each dancer’s own natural tempo. With adaptive coupling on, each pair’s coupling strengthens when they move in phase and weakens when they do not, so the group learns its own coordination; a plasticity lag makes that learning non-reciprocal, which can leave the group restlessly switching between states (metastability).</p>
-      <p><b>The closed loop.</b> The group’s movement writes the music. A song oscillator follows the group’s mean phase, the way a band follows its dancers, and its strength builds as synchrony rises and lingers for a few seconds after it falls: the song’s memory. That strength decides what is heard, from scattered individual notes when the group is apart to a pulse, bass, moving chords and a melody that settles into a hook. With the loop closed, dancers hear the song a moment late and lean toward its beat, with a pull proportional to its strength. Because the song grows from synchrony and in turn sustains it, the loop can make two states stable at once, together and apart, which the landscape shows as two wells and the sweep shows as hysteresis. A longer song memory holds the group together through brief lapses.</p>
-      <p><b>Reading transitions.</b> A transition is the group crossing from one well to the other. Watch the early-warning panel as the group nears the edge, click the floor to nudge it and see how long it takes to recover, and run the sweep to see whether it tips at different points coming from each direction.</p>
+      <p><b>The closed loop.</b> The group’s movement writes the music. A song oscillator follows the group’s mean phase, the way a band follows its dancers, and its strength builds as synchrony rises and lingers for a few seconds after it falls: the song’s memory. That strength brings in the music in layers: a low percussive beat first, then harmony that moves from chord to chord, then a melody that settles into a repeating hook the longer the group stays together. With the loop closed, dancers hear the song a moment late and lean toward its beat, and each layer adds to that pull: the low beat counts most (60%), moving harmony next (25%) and a settled hook least (15%), following evidence that low-frequency percussive sound drives movement most strongly. Because the song grows from synchrony and in turn sustains it, the loop can make two states stable at once, together and apart, which the landscape shows as two wells and the sweep shows as hysteresis. A longer song memory holds the group together through brief lapses.</p>
+      <p><b>Who is dancing.</b> Strangers start with varied tempos and weak ties that they must learn as they dance, so they usually find a shared beat only after a minute or more. Professional dancers keep precise tempos, move with little noise and are tuned to the music, so they lock together quickly. Friends arrive in small groups with similar tempos and lasting ties inside each group and weak ties to everyone else, so synchrony forms within friend groups first and usually spreads, though the groups sometimes stay in cliques.</p>
+      <p><b>The fog machine.</b> Fog cuts what dancers can see but not what they hear. Inside a puff, each dancer’s coupling to the others weakens in proportion to the fog around both of them, for phase and for being drawn toward those in phase, while the pull of the music is unchanged. The puff spreads and thins over about ten seconds. Whether the group holds together through the fog shows how much its synchrony depends on seeing one another and how much the music carries it.</p>
+      <p><b>Reading transitions.</b> A transition is the group crossing from one well to the other. Watch the early-warning panel as the group nears the edge, click the floor to release fog or scramble the rhythm of nearby dancers and see how long the group takes to recover, and run the sweep to see whether it tips at different points coming from each direction.</p>
     </details>
 
     <details>
@@ -192,18 +199,21 @@ a{color:#1d7f76}
         <li>Kuramoto phase synchrony and its order parameter (Kuramoto, 1984; Strogatz, 2000) <span class="tag t-pub">published model</span></li>
         <li>Adaptive coupling with a plasticity phase lag (Aoki &amp; Aoyagi, 2009; metastability from non-reciprocal adaptive couplings, 2025) <span class="tag t-pub">published model</span></li>
         <li>Adaptive coupling inside a swarmalator, with a closed loop through a song oscillator that entrains to the group and whose strength grows with synchrony and lingers <span class="tag t-new">novel combination</span></li>
-        <li>The song’s harmony, rhythm and melody: a generative composition for listening; only its beat and strength act on the dancers <span class="tag t-ill">illustrative</span></li>
+        <li>The song’s harmony, rhythm and melody: a generative composition; each layer adds to the music’s pull, weighted toward low percussion (60%), then moving harmony (25%) and a settled hook (15%), since low-frequency sound strengthens neural tracking of the beat and increases dancing (Lenc et al., 2018; Cameron et al., 2022) <span class="tag t-pub">direction from published findings</span> <span class="tag t-ill">illustrative weights</span></li>
         <li>Local synchrony (distance-weighted local order parameter) and leadership (mean phase lead over synchronized neighbors) <span class="tag t-pub">standard measures</span>; the four collective states and their thresholds <span class="tag t-ill">illustrative</span></li>
         <li>Early-warning signals of critical transitions (Scheffer et al., 2009); quasi-potential from the distribution of the order parameter <span class="tag t-pub">published method</span></li>
+        <li>Groups of strangers, professional dancers and friends: parameter sets for tempo spread, noise, initial ties and response to the music; the fog machine’s reduction of visual coupling <span class="tag t-ill">illustrative</span></li>
         <li>Dance movement of the skeletons: a simple procedural cycle driven by each dancer’s phase, for display only; it does not yet feed back into the dynamics <span class="tag t-ill">illustrative</span></li>
         <li>All parameter values: tempos around one cycle per second, distances, learning rates, music latency (0.15 s), song memory (6 s) <span class="tag t-ill">illustrative</span></li>
       </ul>
       <h2 style="margin-top:16px">References</h2>
       <ul class="refs">
         <li>Aoki, T., &amp; Aoyagi, T. (2009). Co-evolution of phases and connection strengths in a network of phase oscillators. <i>Physical Review Letters, 102</i>, 034101.</li>
+        <li>Cameron, D. J., Dotov, D., Flaten, E., Bosnyak, D., Hove, M. J., &amp; Trainor, L. J. (2022). Undetectable very-low frequency sound increases dancing at a live concert. <i>Current Biology, 32</i>(21), R1222–R1223.</li>
         <li>Couzin, I. D., Krause, J., James, R., Ruxton, G. D., &amp; Franks, N. R. (2002). Collective memory and spatial sorting in animal groups. <i>Journal of Theoretical Biology, 218</i>(1), 1–11.</li>
         <li>Directional synchrony among self-propelled particles under spatial influence. (2023). arXiv preprint.</li>
         <li>Kuramoto, Y. (1984). <i>Chemical oscillations, waves, and turbulence</i>. Springer.</li>
+        <li>Lenc, T., Keller, P. E., Varlet, M., &amp; Nozaradan, S. (2018). Neural tracking of the musical beat is enhanced by low-frequency sounds. <i>Proceedings of the National Academy of Sciences, 115</i>(32), 8221–8226.</li>
         <li>Metastability induced by non-reciprocal adaptive couplings in Kuramoto models. (2025). <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC13061673/">PubMed Central</a>.</li>
         <li>O’Keeffe, K. P., Hong, H., &amp; Strogatz, S. H. (2017). Oscillators that sync and swarm. <i>Nature Communications, 8</i>, 1504.</li>
         <li>Ott, E., &amp; Antonsen, T. M. (2008). Low dimensional behavior of large systems of globally coupled oscillators. <i>Chaos, 18</i>, 037113.</li>
@@ -237,7 +247,7 @@ function main(){
   const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
 
   /* ---------- parameters ---------- */
-  const P = { k0:.3, N:16, K:.9, sigma:.25, J:.5, v0:0, noise:.08, mode:'swarm', adaptive:false, eps:.15, beta:0, loop:true, F:1.1, tau:.15, f0:1.0, Km:2, mem:6, rise:1, speed:1 };
+  const P = { k0:.3, N:16, K:.9, sigma:.25, J:.5, v0:0, noise:.08, mode:'swarm', adaptive:false, eps:.15, beta:0, loop:true, F:1.1, tau:.15, f0:1.0, Km:2, mem:6, rise:1, kf:.9, kfMin:.6, wB:.6, wH:.25, wM:.15, group:'strangers', fogCut:.85, speed:1 };
   const RF = 2.2, SC = 5.2;            // floor radius (model units) and world scale
   const DT = .02;
 
@@ -248,8 +258,22 @@ function main(){
     const r = Math.sqrt(rnd()) * 1.6, a = rnd() * TAU;
     return { x:r * Math.cos(a), z:r * Math.sin(a), ph:rnd() * TAU, th:rnd() * TAU, z0:gauss(), vx:0, vz:0, pitch:PENTA[i % PENTA.length] * (i >= PENTA.length ? .5 : 1), beat:0, glow:0 };
   }
-  function resetCoupling(){ const n = A.length; Kij = new Float32Array(n * n).fill(P.adaptive ? P.k0 : 1); for (let i = 0; i < n; i++) Kij[i * n + i] = 0; }
-  function spawn(n){ A = []; for (let i = 0; i < n; i++) A.push(makeAgent(i)); resetCoupling(); }
+  function resetCoupling(){
+    const n = A.length; Kij = new Float32Array(n * n);
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) Kij[i * n + j] = i === j ? 0 : !P.adaptive ? 1 : A[i].fg !== undefined && A[i].fg === A[j].fg ? P.kf : P.k0;
+  }
+  function spawn(n){
+    A = []; for (let i = 0; i < n; i++) A.push(makeAgent(i));
+    if (P.group === 'friends') {
+      let i = 0, g = 0;
+      while (i < n) {
+        const size = Math.min(n - i, 2 + Math.floor(rnd() * 3)), r = Math.sqrt(rnd()) * 1.3, an = rnd() * TAU, cx = r * Math.cos(an), cz = r * Math.sin(an), gz = gauss();
+        for (let k = 0; k < size; k++, i++) { const a = A[i], b = rnd() * TAU; a.fg = g; a.x = cx + .3 * Math.cos(b); a.z = cz + .3 * Math.sin(b); a.z0 = .9 * gz + .44 * gauss(); }
+        g++;
+      }
+    }
+    resetCoupling();
+  }
   function resize(n){
     const old = A.length, oldK = Kij;
     if (n > old) for (let i = old; i < n; i++) A.push(makeAgent(i)); else A.length = n;
@@ -274,9 +298,20 @@ function main(){
     let kb = 0, m = 0; for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (i !== j) { kb += Kij[i * n + j]; m++; } M.Kbar = m ? kb / m : 0;
   }
   // delayed mean field: what the dancers hear, a moment late
-  const HIST = 64, hS = new Float32Array(HIST), hG = new Float32Array(HIST); let hI = 0;
-  // the song: an oscillator that entrains to the group's mean phase, with a strength that builds and lingers
-  const SONG = { ph:0, G:0, q:0, ev:[] };
+  const HIST = 64, hS = new Float32Array(HIST), hD = new Float32Array(HIST); let hI = 0;
+  // the song: an oscillator that entrains to the group's mean phase, with a strength that builds and lingers.
+  // what the dancers hear is weighted by layer: the low percussive beat most, then moving harmony, then a settled melodic hook
+  const SONG = { ph:0, G:0, q:0, ev:[], chord:0, rhy:0, degs:[0, 1, 2, 1, 0, -1], hook:0, D:0, L:{ p:0, h:0, m:0 } };
+  const ramp = (x, a, b) => Math.max(0, Math.min(1, (x - a) / (b - a)));
+  function songLayers(G, hook){ const p = ramp(G, .15, .6), h = ramp(G, .4, .8), m = ramp(G, .45, .85) * hook; return { p, h, m, D:P.wB * p + P.wH * h + P.wM * m }; }
+  const STEPS = [-2, -1, -1, 1, 1, 2, 0], NRHY = 5;
+  function newMotif(){ SONG.rhy = Math.floor(rnd() * NRHY); const len = [6, 7, 6, 7, 7][SONG.rhy], d = [0]; for (let k = 1; k < len; k++) d.push(Math.max(-3, Math.min(9, d[k - 1] + STEPS[Math.floor(rnd() * 7)]))); SONG.degs = d; }
+  function songBar(){
+    const G = SONG.G;
+    if (G > .4) SONG.chord = (SONG.chord + 1) % 4;
+    if (rnd() < .08 + .5 * (1 - G)) { if (G < .3 || rnd() < .3) { newMotif(); SONG.hook = 0; } else { SONG.degs[Math.floor(rnd() * SONG.degs.length)] += rnd() < .5 ? -1 : 1; SONG.hook *= .5; } }
+    else SONG.hook += (1 - SONG.hook) * .35;
+  }
 
   /* ---------- one step of the model ---------- */
   const beats = [];
@@ -285,18 +320,19 @@ function main(){
     measure();
     SONG.ph += DT * (TAU * P.f0 + P.Km * M.R * Math.sin(M.psi - SONG.ph));
     const cl = clarity(M.R); SONG.G += DT * (cl - SONG.G) / (cl > SONG.G ? P.rise : Math.max(.2, P.mem));
-    const q = Math.floor(SONG.ph / (TAU / 4)); while (SONG.q < q) { SONG.q++; SONG.ev.push(SONG.q); } if (SONG.ev.length > 64) SONG.ev.splice(0, SONG.ev.length - 64);
-    hS[hI % HIST] = SONG.ph; hG[hI % HIST] = SONG.G; hI++;
+    const q = Math.floor(SONG.ph / (TAU / 4)); while (SONG.q < q) { SONG.q++; if (((SONG.q % 16) + 16) % 16 === 0) songBar(); SONG.ev.push(SONG.q); } if (SONG.ev.length > 64) SONG.ev.splice(0, SONG.ev.length - 64);
+    SONG.L = songLayers(SONG.G, SONG.hook); SONG.D = SONG.L.D;
+    hS[hI % HIST] = SONG.ph; hD[hI % HIST] = SONG.D; hI++;
     const lag = Math.min(HIST - 1, Math.round(P.tau / DT)), di = (hI - 1 - lag + HIST * 4) % HIST;
-    const Gd = hG[di], Pd = hS[di] + TAU * P.f0 * P.tau;   // the song heard now was played tau ago
+    const Dd = hD[di], Pd = hS[di] + TAU * P.f0 * P.tau;   // the song heard now was played tau ago
     const dth = new Float32Array(n), vx = new Float32Array(n), vz = new Float32Array(n), dph = new Float32Array(n);
     for (let i = 0; i < n; i++) {
       const ai = A[i]; let sx = 0, sz = 0, sp = 0, alx = 0, alz = 0, atx = 0, atz = 0, rpx = 0, rpz = 0, nr = 0, al = 0;
       for (let j = 0; j < n; j++) {
         if (i === j) continue;
         const aj = A[j], rx = aj.x - ai.x, rz = aj.z - ai.z, d = Math.sqrt(rx * rx + rz * rz) + 1e-6;
-        const dthij = aj.th - ai.th, c = Math.cos(dthij), s = Math.sin(dthij);
-        sp += Kij[i * n + j] * s / Math.max(d, .2);
+        const dthij = aj.th - ai.th, vis = (1 - P.fogCut * (ai.fog || 0)) * (1 - P.fogCut * (aj.fog || 0)), c = Math.cos(dthij) * vis, s = Math.sin(dthij);
+        sp += Kij[i * n + j] * s * vis / Math.max(d, .2);
         if (P.mode === 'swarm') {
           sx += rx / d * (1 + P.J * c) - rx / Math.max(d * d, .01); sz += rz / d * (1 + P.J * c) - rz / Math.max(d * d, .01);
           if (P.v0 > 0) { const w = Math.exp(-d / .8); alx += Math.sin(aj.ph - ai.ph) * w; al += w; }
@@ -307,7 +343,7 @@ function main(){
         }
         if (P.adaptive) { const k = i * n + j; Kij[k] += P.eps * DT * (Math.cos(dthij + P.beta) - Kij[k]); }
       }
-      dth[i] = omega(ai) + Kn * sp + (P.loop ? P.F * Gd * Math.sin(Pd - ai.th) : 0);
+      dth[i] = omega(ai) + Kn * sp + (P.loop ? P.F * Dd * Math.sin(Pd - ai.th) : 0);
       if (P.mode === 'swarm') {
         vx[i] = sx / n + P.v0 * Math.cos(ai.ph); vz[i] = sz / n + P.v0 * Math.sin(ai.ph);
         dph[i] = al ? 1.5 * alx / al : 0;
@@ -328,9 +364,11 @@ function main(){
       a.x += vx[i] * DT; a.z += vz[i] * DT; a.vx = vx[i]; a.vz = vz[i];
       a.ph += dph[i] * DT + (P.mode === 'couzin' || P.v0 > 0 ? .3 * Math.sqrt(DT) * gauss() : 0);
       if (Math.floor(a.th / TAU) !== Math.floor(before / TAU)) { a.beat = 1; beats.push(i); }
+      a.fog = fogAt(a.x, a.z);
     }
-    if (P.adaptive) for (let k = 0; k < Kij.length; k++) Kij[k] = Math.max(-1, Math.min(1, Kij[k]));
+    if (P.adaptive) for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { const k = i * n + j, fl = i !== j && A[i].fg !== undefined && A[i].fg === A[j].fg ? P.kfMin : -1; Kij[k] = Math.max(fl, Math.min(1, Kij[k])); }
     t += DT;
+    fogStep();
     sweepStep();
   }
 
@@ -366,7 +404,13 @@ function main(){
     stateTime[state] += .1;
     if (cand !== state) { if (cand !== pend) { pend = cand; pendT = t; } else if (t - pendT >= 2) { state = cand; pend = null; } } else pend = null;
     if (state !== prev) { transitions++; log(`${STATES[state].n}: ${STATES[state].d.toLowerCase()}. The group had been ${STATES[prev].n.toLowerCase()} for ${fmtT(t - since)}.`); since = t; }
-    if (rec && t - rec.t0 > .5) {
+    if (rec && rec.fog) {
+      if (!rec.dropped && M.R < .8 * rec.R0) { rec.dropped = t; }
+      else if (rec.dropped && M.R >= .9 * rec.R0) { log(`Found its synchrony again ${(t - rec.dropped).toFixed(1)} s after the fog broke it up.`); rec = null; }
+      else if (!rec.dropped && t - rec.t0 > 15) { log('The group held together through the fog: the music and the dancers outside it carried those inside.'); rec = null; }
+      else if (rec.dropped && t - rec.dropped > 30) { log('Thirty seconds after the fog broke it up, the group has not recovered: the fog tipped it into the other state.'); rec = null; }
+    }
+    else if (rec && t - rec.t0 > .5) {
       if (M.R >= .9 * rec.R0) { log(`Recovered its synchrony ${(t - rec.t0).toFixed(1)} s after the nudge. Slower recovery means the group is nearer the edge.`); rec = null; }
       else if (t - rec.t0 > 30) { log('Thirty seconds after the nudge the group has not recovered: the disturbance tipped it into the other state.'); rec = null; }
     }
@@ -399,8 +443,23 @@ function main(){
   let lastSweep = null;
   $('#sweep').onclick = () => { for (const a of A) a.th = rnd() * TAU; SW = { t:0, up:[], dn:[], K0:P.K }; lastSweep = SW; $('#sweep').disabled = true; log('Sweep started: the dancers’ rhythms are scattered, then coupling rises from 0 for one minute and falls back.'); };
 
+  /* ---------- fog ---------- */
+  const FOG = [];
+  const fogDensity = f => Math.exp(-f.age / 9) * Math.min(1, f.age / .6);
+  const fogRadius = f => .45 + .55 * (1 - Math.exp(-f.age / 3));
+  function fogAt(x, z){ let v = 0; for (const f of FOG) { const r = fogRadius(f), d2 = (x - f.x) ** 2 + (z - f.z) ** 2; v += fogDensity(f) * Math.exp(-d2 / (r * r)); } return Math.min(1, v); }
+  function fogStep(){ for (let k = FOG.length - 1; k >= 0; k--) { FOG[k].age += DT; if (FOG[k].age > 30) FOG.splice(k, 1); } }
+
   /* ---------- nudge (click the floor) ---------- */
   let rec = null;
+  function fog(px, pz){
+    const R0 = REC.R.length > 30 ? REC.R.slice(-30).reduce((a, b) => a + b, 0) / 30 : M.R;
+    FOG.push({ x:px, z:pz, age:0 }); addPuff(FOG[FOG.length - 1]);
+    const n = A.filter(a => Math.hypot(a.x - px, a.z - pz) < 1).length;
+    const who = n ? `${n} dancer${n === 1 ? '' : 's'} can barely see their neighbors, though they still hear the music.` : 'No one is inside it yet.';
+    if (R0 > .45 && n) { rec = { t0:t, R0, fog:true, dropped:0 }; log(`A puff of fog rolls across the floor. ${who} Watching whether the group holds together.`); }
+    else log(`A puff of fog rolls across the floor. ${who}`);
+  }
   function nudge(px, pz){
     let n = 0; const R0 = REC.R.length > 30 ? REC.R.slice(-30).reduce((a, b) => a + b, 0) / 30 : M.R;
     for (const a of A) { if (Math.hypot(a.x - px, a.z - pz) < 1.1) { a.th += (rnd() * 2 - 1) * Math.PI; a.glow = 1; n++; } }
@@ -421,7 +480,7 @@ function main(){
   camera.position.set(0, 15, 27);
   let zh;
   stage.addEventListener('wheel', ev => { if (ev.ctrlKey || ev.metaKey) return; ev.stopPropagation(); const z = $('#zoomhint'); z.style.opacity = 1; clearTimeout(zh); zh = setTimeout(() => { z.style.opacity = 0; }, 1400); }, { capture:true });
-  if (matchMedia('(pointer: coarse)').matches) $('#hint').textContent = 'Drag to turn, pinch to zoom. Tap the floor to scramble the rhythm of the dancers nearby. Body color shows each dancer’s local synchrony.';
+  if (matchMedia('(pointer: coarse)').matches) $('#hint').textContent = 'Drag to turn, pinch to zoom. Tap the floor to release a puff of fog. Body color shows each dancer’s local synchrony.';
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
   Object.assign(controls, { enableDamping:true, enablePan:false, minDistance:10, maxDistance:60, maxPolarAngle:1.45, autoRotate:!reduce, autoRotateSpeed:.25 });
   controls.target.set(0, 3.6, 0);
@@ -533,6 +592,28 @@ function main(){
   const ripples = [], ringGeo = new THREE.RingGeometry(.92, 1, 48);
   function ripple(x, z, color, size){ if (reduce || ripples.length > 60) return; const m = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({ color, transparent:true, opacity:.7, depthWrite:false })); m.rotation.x = -Math.PI / 2; m.position.set(x, .03, z); scene.add(m); ripples.push({ m, t:0, size }); }
 
+  // fog puffs: soft grey clouds that spread, rise a little and thin out
+  const puffs = [];
+  function addPuff(f){
+    const sp = [];
+    for (let k = 0; k < 14; k++) {
+      const m = new THREE.Sprite(new THREE.SpriteMaterial({ map:dotTex, color:0xa29d96, transparent:true, opacity:0, depthWrite:false, depthTest:false }));
+      const an = rnd() * TAU, rr = Math.sqrt(rnd());
+      m.userData = { ox:Math.cos(an) * rr, oz:Math.sin(an) * rr, y:.3 + rnd() * 2.4, s:.75 + rnd() * .6, rise:.08 + rnd() * .12 };
+      m.renderOrder = 5; scene.add(m); sp.push(m);
+    }
+    puffs.push({ f, sp });
+  }
+  function clearPuffs(){ for (const p of puffs) for (const m of p.sp) { scene.remove(m); m.material.dispose(); } puffs.length = 0; }
+  function drawPuffs(){
+    for (let k = puffs.length - 1; k >= 0; k--) {
+      const p = puffs[k];
+      if (!FOG.includes(p.f)) { for (const m of p.sp) { scene.remove(m); m.material.dispose(); } puffs.splice(k, 1); continue; }
+      const r = fogRadius(p.f) * SC, dn = fogDensity(p.f);
+      for (const m of p.sp) { const u = m.userData; m.position.set(p.f.x * SC + u.ox * r * .8, u.y + u.rise * p.f.age, p.f.z * SC + u.oz * r * .8); m.scale.setScalar(r * 1.5 * u.s); m.material.opacity = .3 * dn; }
+    }
+  }
+
   /* ---------- sound ---------- */
   // the music is written on the spot by the song oscillator: as synchrony builds, its strength G brings in
   // pulse, bass, harmony that moves, and a melody that settles into a repeating hook
@@ -542,10 +623,6 @@ function main(){
     const CHORDS = [ { b:38, v:[57, 60, 62, 65] }, { b:34, v:[57, 58, 62, 65] }, { b:41, v:[57, 60, 64, 65] }, { b:36, v:[55, 60, 62, 64] } ];
     const SCALE = [0, 2, 3, 5, 7, 9, 10];
     const RHY = [[0, 3, 6, 8, 10, 12], [0, 2, 4, 7, 8, 12, 14], [0, 3, 4, 8, 11, 12], [0, 4, 6, 8, 12, 13, 14], [0, 2, 3, 6, 8, 10, 14]];
-    let chord = 0, rhy = RHY[0], degs = [], step = 0;
-    const walk = n => { const d = [0]; for (let k = 1; k < n; k++) d.push(Math.max(-3, Math.min(9, d[k - 1] + [-2, -1, -1, 1, 1, 2, 0][Math.floor(Math.random() * 7)]))); return d; };
-    function newMotif(){ rhy = RHY[Math.floor(Math.random() * RHY.length)]; degs = walk(rhy.length); }
-    newMotif();
     const toMidi = d => 62 + 12 * Math.floor(d / 7) + SCALE[((d % 7) + 7) % 7];
     const snap = (m, tones) => { let best = m, bd = 99; for (const t of tones) for (let o = -24; o <= 24; o += 12) { const c = t + o, dd = Math.abs(c - m); if (dd < bd) { bd = dd; best = c; } } return best; };
     function init(){
@@ -575,14 +652,8 @@ function main(){
     }
     function bass(m, g){ const t0 = T(), o = ctx.createOscillator(), f = ctx.createBiquadFilter(), e = ctx.createGain(); o.type = 'sawtooth'; o.frequency.value = mtof(m); f.type = 'lowpass'; f.frequency.value = 380; env(e, t0, .01, g, .5); o.connect(f); f.connect(e); e.connect(master); o.start(t0); o.stop(t0 + .55); }
     function onSixteenth(q, G){
-      const s = ((q % 16) + 16) % 16, C = CHORDS[chord];
-      if (s === 0) {
-        if (G > .4) chord = (chord + 1) % CHORDS.length;
-        if (Math.random() < .08 + .5 * (1 - G)) { if (G < .3 || Math.random() < .3) newMotif(); else degs[Math.floor(Math.random() * degs.length)] += Math.random() < .5 ? -1 : 1; }
-        step = 0;
-      }
-      const C2 = CHORDS[chord];
-      if (G > .22 && (s === 0 || s === 8)) kick(.55 * Math.min(1, (G - .22) / .5));
+      const s = ((q % 16) + 16) % 16, C2 = CHORDS[SONG.chord], rhy = RHY[SONG.rhy], degs = SONG.degs;
+      if (G > .15 && (s === 0 || s === 8)) kick(.55 * Math.min(1, (G - .15) / .45));
       if (G > .8 && (s === 4 || s === 12)) kick(.25);
       if (G > .38 && (s === 0 || s === 10 || (G > .7 && s === 7))) bass(C2.b + (s === 7 ? 7 : 0), .22 * Math.min(1, (G - .38) / .4));
       if (G > .5 && s % 4 === 2) hiss(.07 * (G - .4), 7000, .05);
@@ -591,7 +662,7 @@ function main(){
       if (G > .62) { const v = C2.v, i = s % 8 < 4 ? s % 4 : 3 - (s % 4); tone(mtof(v[i] + 12), 'sine', .05 * Math.min(1, (G - .62) / .3), .22, (s % 4 - 1.5) / 2.5, true); }
       if (G > .45) {
         const k = rhy.indexOf(s);
-        if (k >= 0) { let m = toMidi(degs[k]); if (s % 4 === 0) m = snap(m, C2.v); tone(mtof(m), 'triangle', .085 * Math.min(1, (G - .4) / .4), .42, 0, true, (1 - G) * 12); }
+        if (k >= 0 && k < degs.length) { let m = toMidi(degs[k]); if (s % 4 === 0) m = snap(m, C2.v); tone(mtof(m), 'triangle', .085 * Math.min(1, (G - .4) / .4), .42, 0, true, (1 - G) * 12); }
       }
     }
     return {
@@ -600,7 +671,7 @@ function main(){
       frame(beatsNow){
         const ev = SONG.ev.splice(0);
         if (!ctx || !playing) return;
-        const G = SONG.G, n = A.length, C = CHORDS[chord];
+        const G = SONG.G, n = A.length, C = CHORDS[SONG.chord];
         for (const q of ev.slice(-4)) onSixteenth(q, G);
         // each dancer's own note: loud and out of tune when apart, absorbed into the song's harmony as it forms
         for (const i of beatsNow.slice(0, 12)) {
@@ -633,7 +704,7 @@ function main(){
     let strong = 0; for (let j = 0; j < n; j++) if (j !== i && Kij[i * n + j] > .6) strong++;
     const rel = wrap(a.th - M.psi);
     const loc = a.loc || 0, L = a.lead || 0;
-    tip.innerHTML = `<b>Dancer ${i + 1}</b><br>Local synchrony ${loc.toFixed(2)}: ${loc > .8 ? 'moving closely with neighbors' : loc > .55 ? 'partly in step with neighbors' : 'mostly on their own beat'}. ${a.leader ? 'Leading nearby dancers: slightly ahead, and they keep catching up.' : L < -.12 && loc > .55 ? 'Following nearby dancers, slightly behind.' : ''} Natural tempo ${(60 * omega(a) / TAU).toFixed(0)} cycles a minute.${P.adaptive ? ` Strongly coupled to ${strong} other${strong === 1 ? '' : 's'}.` : ''}`;
+    tip.innerHTML = `<b>Dancer ${i + 1}</b><br>Local synchrony ${loc.toFixed(2)}: ${loc > .8 ? 'moving closely with neighbors' : loc > .55 ? 'partly in step with neighbors' : 'mostly on their own beat'}. ${a.leader ? 'Leading nearby dancers: slightly ahead, and they keep catching up.' : L < -.12 && loc > .55 ? 'Following nearby dancers, slightly behind.' : ''} Natural tempo ${(60 * omega(a) / TAU).toFixed(0)} cycles a minute.${P.adaptive ? ` Strongly coupled to ${strong} other${strong === 1 ? '' : 's'}.` : ''}${a.fg !== undefined ? ` Came with friend group ${a.fg + 1}.` : ''}${(a.fog || 0) > .25 ? ' In the fog: can barely see the others, but still hears the music.' : ''}`;
     const r = stage.getBoundingClientRect(); tip.style.display = 'block'; tip.style.left = Math.min(ev.clientX - r.left + 14, Wd - 270) + 'px'; tip.style.top = Math.max(8, ev.clientY - r.top - 10) + 'px';
   });
   renderer.domElement.addEventListener('pointerleave', () => { tip.style.display = 'none'; });
@@ -643,7 +714,7 @@ function main(){
     if (!down || Math.hypot(ev.clientX - down[0], ev.clientY - down[1]) > 6) return;
     setPtr(ev); const pt = new V(); if (!ray.ray.intersectPlane(new THREE.Plane(new V(0, 1, 0), 0), pt)) return;
     if (Math.hypot(pt.x, pt.z) > RF * SC) return;
-    nudge(pt.x / SC, pt.z / SC);
+    if (clickMode === 'fog') fog(pt.x / SC, pt.z / SC); else nudge(pt.x / SC, pt.z / SC);
   });
 
   /* ---------- controls ---------- */
@@ -659,24 +730,29 @@ function main(){
   $('#kA').onchange = e => { P.adaptive = e.target.checked; resetCoupling(); syncControls(); log(P.adaptive ? 'Adaptive coupling on: pairs who move in phase now bind more tightly.' : 'Adaptive coupling off: every pair is coupled equally again.'); };
   $('#kL').onchange = e => { P.loop = e.target.checked; syncControls(); log(P.loop ? 'Loop closed: the dancers hear the group’s song and lean toward its beat.' : 'Loop opened: the music is still played, but the dancers no longer respond to it.'); };
   $('#mode').onclick = e => { const b = e.target.closest('button'); if (!b) return; P.mode = b.dataset.v; syncControls(); log(P.mode === 'couzin' ? 'Movement now follows Couzin’s zones: keep apart when too close, align with neighbors, move toward those further away.' : 'Movement now follows the swarmalator rule: drawn together, more so toward those in phase.'); };
-  $('#restart').onclick = () => { spawn(P.N); buildFigures(); log('New dancers take the floor.'); };
+  $('#restart').onclick = () => { FOG.length = 0; clearPuffs(); spawn(P.N); buildFigures(); log('New dancers take the floor.'); };
   const SPEEDS = [.5, 1, 2, 4], SPL = ['Half speed', 'Real time', 'Twice as fast', 'Four times as fast'];
   $('#speed').oninput = e => { P.speed = SPEEDS[+e.target.value]; $('#speedl').textContent = SPL[+e.target.value]; };
   let run = !reduce; const play = $('#play');
   const syncPlay = () => { play.textContent = run ? 'Pause' : 'Play'; play.setAttribute('aria-pressed', !run); };
   play.onclick = () => { run = !run; syncPlay(); }; syncPlay();
 
-  const PRESETS = [
-    { n:'Drifting apart', s:'Weak coupling, varied tempos', p:{ K:.3, sigma:.2, J:.3, v0:0, noise:.05, mode:'swarm', adaptive:false, loop:false } },
-    { n:'At the edge', s:'Poised between two states', p:{ K:.9, sigma:.25, J:.5, v0:0, noise:.08, mode:'swarm', adaptive:false, loop:true, F:1.1, mem:6 } },
-    { n:'Locked together', s:'Strong coupling and music', p:{ K:2, sigma:.1, J:.6, v0:0, noise:.04, mode:'swarm', adaptive:false, loop:true, F:1.5 } },
-    { n:'Learning to sync', s:'Coupling learns from moving together', p:{ K:1.4, sigma:.15, J:.5, v0:0, noise:.06, mode:'swarm', adaptive:true, eps:.12, beta:0, loop:true, F:.8 } },
-    { n:'Restless', s:'Non-reciprocal learning, metastable', p:{ K:2, sigma:.1, J:.4, v0:0, noise:.06, mode:'swarm', adaptive:true, eps:.15, beta:.6, loop:false } },
-    { n:'Phase wave', s:'Identical tempos, phase sets position', p:{ K:0, sigma:0, J:1, v0:0, noise:0, mode:'swarm', adaptive:false, loop:false } },
-    { n:'Traveling together', s:'Directional swarmalators', p:{ K:1.2, sigma:.08, J:.6, v0:.3, noise:.05, mode:'swarm', adaptive:false, loop:true, F:1 } },
-    { n:'Flock', s:'Couzin zones with phase coupling', p:{ K:1.2, sigma:.1, J:.5, v0:.1, noise:.05, mode:'couzin', adaptive:false, loop:true, F:1 } } ];
-  $('#presets').innerHTML = PRESETS.map((q, i) => `<button data-i="${i}">${q.n}<small>${q.s}</small></button>`).join('');
-  $('#presets').onclick = e => { const b = e.target.closest('button'); if (!b) return; const q = PRESETS[+b.dataset.i]; Object.assign(P, { mem:6 }, q.p); resetCoupling(); syncControls(); log(`Scenario: ${q.n.toLowerCase()}. ${q.s}.`); };
+  const BASE = { K:.9, sigma:.25, J:.5, v0:0, noise:.08, mode:'swarm', adaptive:false, eps:.15, beta:0, loop:true, F:1.1, mem:6, k0:.3, kf:.9 };
+  const GROUPS = {
+    strangers:{ n:'Strangers', s:'Varied tempos, weak ties', d:'Strangers: tempos vary and ties start weak (0.1), so the group has to learn whom to move with. They usually start apart and find a shared beat within one to three minutes, as the song builds and ties form; the music does much of the early work.', p:{ K:1, sigma:.2, J:.2, noise:.08, adaptive:true, eps:.08, k0:.1, F:1.3 } },
+    pros:{ n:'Professional dancers', s:'Precise tempos, tuned to the music', d:'Professional dancers: close tempos, little noise and a strong response to the music, so they lock together quickly and recover fast from disturbances.', p:{ K:1.2, sigma:.06, J:.5, noise:.03, adaptive:false, F:1.6 } },
+    friends:{ n:'Friends', s:'Strong ties in small groups', d:'Friends: they arrive in groups of two to four with similar tempos and strong ties inside each group (starting at 0.9, never falling below 0.6) and the same weak ties as strangers (0.1) to everyone else, so synchrony forms within friend groups first and usually spreads to the whole floor, though sometimes the groups stay in their own cliques.', p:{ K:1, sigma:.2, J:.6, noise:.08, adaptive:true, eps:.08, k0:.1, kf:.9, F:1.3 } } };
+  let clickMode = 'fog';
+  $('#presets').innerHTML = Object.entries(GROUPS).map(([k, g]) => `<button data-k="${k}" aria-pressed="false">${g.n}<small>${g.s}</small></button>`).join('');
+  function chooseGroup(k, quiet){
+    const g = GROUPS[k]; Object.assign(P, BASE, g.p); P.group = k; FOG.length = 0; clearPuffs();
+    spawn(P.N); buildFigures(); syncControls();
+    for (const b of document.querySelectorAll('#presets button')) b.setAttribute('aria-pressed', b.dataset.k === k);
+    $('#groupNote').textContent = g.d;
+    if (!quiet) log(`${g.n} take the floor.`);
+  }
+  $('#presets').onclick = e => { const b = e.target.closest('button'); if (b) chooseGroup(b.dataset.k); };
+  $('#clickMode').onclick = e => { const b = e.target.closest('button'); if (!b) return; clickMode = b.dataset.v; for (const x of document.querySelectorAll('#clickMode button')) x.setAttribute('aria-pressed', x.dataset.v === clickMode); };
 
   /* ---------- panel ---------- */
   const row = (k, v, note) => `<div class="row"><span>${k}</span><b>${v}</b>${note ? `<em>${note}</em>` : ''}</div>`;
@@ -693,6 +769,8 @@ function main(){
     h += row('Mean local synchrony', (M.local || 0).toFixed(2), 'How in step each dancer is with nearby dancers, averaged: high with low R means clusters');
     const leaders = A.map((a, i) => [i, a.lead || 0, a.loc || 0]).filter((x, i) => A[i].leader).sort((x, y) => y[1] - x[1]);
     h += row('Leading now', leaders.length ? leaders.slice(0, 4).map(x => 'dancer ' + (x[0] + 1)).join(', ') : 'no clear leader', 'Dancers slightly ahead of synchronized neighbors, who are catching up: marked by a dark marker above the head');
+    const L = SONG.L;
+    h += row('Music the dancers hear', Math.round(SONG.D * 100) + '%', `Low beat ${Math.round(L.p * 100)}% · moving harmony ${Math.round(L.h * 100)}% · settled hook ${Math.round(L.m * 100)}%. The beat counts most (${Math.round(P.wB * 100)}%), then harmony (${Math.round(P.wH * 100)}%), then the hook (${Math.round(P.wM * 100)}%).`);
     h += row('Collective state', `${STATES[state].n} for ${fmtT(t - since)}`, `${transitions} change${transitions === 1 ? '' : 's'} of state so far. ${trend}`);
     const tot = Object.values(stateTime).reduce((a, b) => a + b, 0) || 1;
     h += `<div class="statekey">${Object.entries(STATES).map(([k, v]) => `<div${k === state ? ' class="on"' : ''}><i style="background:${v.c}"></i><span><b>${v.n}</b> ${v.d}</span><em>${Math.round(stateTime[k] / tot * 100)}%</em></div>`).join('')}</div>`;
@@ -784,12 +862,13 @@ function main(){
     }
     const rc = rgeo.attributes.color; for (let k = 0; k < rpos.count; k++) { const g = rseg[k] * 3; rc.setXYZ(k, segRGB[g], segRGB[g + 1], segRGB[g + 2]); } rc.needsUpdate = true;
     stCol.set(STATES[state].c); floor.material.color.lerp(stCol.lerp(floorBase, .9), Math.min(1, dt * 2));
+    drawPuffs();
     for (let i = ripples.length - 1; i >= 0; i--) { const r = ripples[i]; r.t += dt / .9; r.m.scale.setScalar(.3 + r.size * r.t); r.m.material.opacity = .6 * (1 - r.t); if (r.t >= 1) { scene.remove(r.m); r.m.material.dispose(); ripples.splice(i, 1); } }
     controls.update(); renderer.render(scene, camera);
     ui += dt; if (ui > .25) { ui = 0; renderStats(); drawCharts(); }
   }
-  spawn(P.N); buildFigures(); syncControls(); measure();
-  log('The dancers begin at the edge: each at their own tempo, with the loop closed. Watch them tip in and out of synchrony.');
+  chooseGroup('strangers', true); measure();
+  log('A group of strangers takes the floor, each at their own tempo, with the music playing. Watch whether they find a shared beat.');
   window.__eos = { P, M, A:() => A, step, fast(sec){ const k = Math.round(sec / DT); for (let i = 0; i < k; i++) { step(); recClock += DT; if (recClock >= .1) { recClock = 0; record(); } } renderStats(); }, REC, sweep:() => $('#sweep').click(), get SW(){ return SW; }, get last(){ return lastSweep; }, spawn:n => { spawn(n); buildFigures(); }, resetCoupling };
   frame();
 }
