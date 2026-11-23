@@ -1,48 +1,62 @@
-# edgeofsync
+# Edge of Sync
 
-**A computational model of collective transitions in a dancing group**
+**Collective transitions in dancing groups** · [edgeofsync.org](https://edgeofsync.org)
 
-Live model: [edgeofsync.org](https://edgeofsync.org)
+This project models the transitions in a closed-loop feedback system of human-to-human and human-to-audio coupled oscillations, where group movement generates music in real time alongside heart rate and both limb and agent-center locations. It asks when and how the collective shifts between synchrony states, whether those shifts track markers of altered states of consciousness (heart rate) with persistence (a psychological instrument), and whether collective synchrony carries longer-term consequences for wellbeing. Modeling aims are mechanistic specificity of transitions, estimating how near a transition the system is, and whether groups regulate that distance.
 
-Edge of Sync models how a dancing group moves into and out of synchrony in a closed loop, where the dancers' own movement generates the music they hear. Each dancer is an oscillator with a natural tempo of their own, moving across a shared floor, and the strength of their coupling learns from their shared history. The model asks when and how the collective shifts between states of synchrony, from either direction, how near to a transition the group is at any moment, and whether groups hold themselves at that edge.
+The project uses two complementary models:
 
-It is the generative counterpart to an experimental study that will track movement, sound and heart rate in dancing groups.
+- **The computational model** (theoretical) generates these dynamics from first principles. It is led by adaptive-network Kuramoto coupling, with the swarmalator family and Couzin zonal models adding spatial movement, and a closed loop through music the group generates as it dances.
+- **The data-driven model** (analytical) will turn video recordings of dancing groups into per-dancer movement signals, feeding a pipeline that detects collective states, transitions, coupling and early-warning signals directly from the recordings. It is in development.
 
-## What the model combines
+## Repository contents
 
-- **Swarmalators** for movement coupled to phase, with heterogeneous tempos and optional self-propulsion
-- **Couzin zones** (repulsion, alignment, attraction) as an alternative movement rule
-- **Kuramoto phase coupling**, weighted by proximity
-- **Adaptive (Hebbian) coupling**, with an optional plasticity lag for non-reciprocal learning
-- **A closed loop through generated music**, whose pull on the dancers grows with how clearly a shared beat can be heard
+| Path | Contents |
+|---|---|
+| `index.html` | Landing page |
+| `theoretical/index.html` | The interactive computational model |
+| `theoretical/Edge_of_Sync_About_the_Model.pdf` | Full model description: equations, parameters, results and the transition framework |
+| `analytical/index.html` | Placeholder for the data-driven model |
+| `assets/` | Images for the landing page |
+| `js/` | Three.js r147 and OrbitControls, served locally |
+| `CNAME` | Custom domain for GitHub Pages |
 
-## Measures
+## The computational model
 
-Phase synchrony (Kuramoto R), space-phase order (S), mean learned coupling, metastability, a quasi-potential landscape, early-warning signals (variance and autocorrelation), recovery time after a perturbation, and an up-and-down coupling sweep for hysteresis.
+Each dancer is an oscillator with its own natural tempo and a position on a shared floor. Dancers couple their phases to those nearby, are drawn toward those in phase with them, and, with adaptive coupling on, learn whom to move with from their shared phase history. A song oscillator follows the group's mean phase and builds in strength as the group synchronizes, bringing in a low percussive beat, moving harmony and a melodic hook. The dancers hear the song a moment late and lean toward its beat, pulled most by the low percussion.
+
+In the web model you can:
+
+- choose **who is dancing**: strangers, professional dancers or friends;
+- **click the floor** to release fog, which weakens what nearby dancers can see but not what they hear, or to scramble their rhythm, and read the impact analysis under the buttons;
+- run a **coupling sweep**, watch the **early-warning** indicators and the **occupancy landscape**, and follow the group's trajectory in the **phase portrait**;
+- adjust coupling, tempo spread, noise, movement rules, adaptive learning and the music's pull and memory.
+
+Every element in the model is tagged in its Data and Sources section as a published model, a novel combination or an illustrative choice. The PDF sets out the mathematics in full.
+
+## Python notebook
+
+`Edge_of_Sync_Model.ipynb` is a Python version of the computational model that matches the web model. It runs single groups, compares the three groups, runs fog and scramble experiments with the same rules as the website, runs coupling sweeps, computes early-warning indicators and occupancy landscapes, and tests for two stable states at fixed coupling. It needs only `numpy` and `matplotlib`.
+
+```python
+m = DanceFloor('friends', seed=3, F=0.8, mem=15)
+out = m.run(120)          # time series of R, S, coupling, song strength and more
+```
 
 ## Status
 
-All parameter values are illustrative and not yet calibrated to dance data. The combination of adaptive coupling, swarmalators and a closed musical loop is a novel model built for this project.
+The model's equations and parameter values are mechanistic assumptions; the values are illustrative and have not yet been calibrated against human data. Results reported in the documentation come from preliminary simulation runs and are labeled with the number of runs behind them. The documentation distinguishes established theory, implemented and observed results, and proposed mechanisms throughout.
 
-## Running it
+## Running locally
 
-The model is a single page, `index.html`, using [three.js](https://threejs.org) r147 (included in `js/`). Open the page in a browser, or visit the live site. No build step is needed.
+The site is static. From the repository folder:
 
-## Key references
+```bash
+python3 -m http.server 8000
+```
 
-- O'Keeffe, K. P., Hong, H., & Strogatz, S. H. (2017). Oscillators that sync and swarm. *Nature Communications, 8*, 1504.
-- Yoon, S., O'Keeffe, K. P., Mendes, J. F. F., & Goltsev, A. V. (2022). Sync and swarm: Solvable model of nonidentical swarmalators. *Physical Review Letters, 129*, 208002.
-- Couzin, I. D., Krause, J., James, R., Ruxton, G. D., & Franks, N. R. (2002). Collective memory and spatial sorting in animal groups. *Journal of Theoretical Biology, 218*(1), 1–11.
-- Aoki, T., & Aoyagi, T. (2009). Co-evolution of phases and connection strengths in a network of phase oscillators. *Physical Review Letters, 102*, 034101.
-- Scheffer, M., et al. (2009). Early-warning signals for critical transitions. *Nature, 461*, 53–59.
+then open `http://localhost:8000`.
 
-The full reference list is in the model's Data and Sources section.
+## License and credit
 
-## License
-
-Code: MIT License (see `LICENSE`).
-Text and figures: [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-
-## Author
-
-Model developed by Emma T. Swan.
+Released under the MIT License. Developed by Emma T. Swan.
